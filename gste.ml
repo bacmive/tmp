@@ -230,7 +230,7 @@ let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression)
 					
 
 (********************************* ring-buffer FIFO ********************************************)
-let mem : var = Ident ("mem") 
+let mem : var = Ident "mem"
 
 let rst : expression = IVar (Ident "reset")
 let push : expression = IVar (Ident "push")
@@ -382,3 +382,4 @@ let tagFunOfRbFifo (i : int) (n : node): formula list =
 
 (** verification on SMT*)
 
+(** expression TO Z3 expression *)
