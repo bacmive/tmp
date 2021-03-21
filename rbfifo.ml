@@ -177,5 +177,12 @@ let consOfRbFifo (d : int) (e :edge) : formula =
 let rbFifoGsteSpec ( d : int ) : gsteSpec = 
 	Graph (vectexI, edgeL, antOfRbFifo d, consOfRbFifo d)
 
-let () =
-	List.map (fun a -> match a with (Vertex i) -> print_endline (string_of_int i)) vectexL
+
+
+let () = 
+	let prt vls = 
+	match vls with
+	[] -> print_endline ""
+	| Vertex i :: t -> print_endline (string_of_int i) :: prt t in
+	prt vectexL
+	
