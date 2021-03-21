@@ -77,6 +77,10 @@ let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression)
 type node = Vertex of int
 type edge = Edge of node * node
 
+type edgeToFormula = edge -> formula
+(* gste Graph *)
+type gsteSpec = Graph of node * edge list * edgeToFormula * edgeToFormula
+
 (** the source node of an edge and the sink node of an edge*)
 let source : edge -> node = function
     | Edge (n, _) -> n
