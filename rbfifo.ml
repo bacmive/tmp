@@ -55,6 +55,15 @@ let rec caseStatement : formulaStaPair list -> statement = function
   | [] -> skip
   | (f, gS)::t -> If (f, gS, (caseStatement t))
 
+(** auxiliary tools: down and upt*)
+let rec down : int -> int list = function 
+	| 0 -> [0]
+	| n -> (down (n-1))@[n]
+
+let rec upt (f : int) (t : int) : int list =
+	if f > t then []
+	else f :: upt (f+1) t
+	
 (** Array Manipulation with Expression and Statement*)
 let readArray (v : var) (bound : int) (e : expression) : expression =
 	caseExpression (List.map (fun i -> (Eqn (e, (Const (Index i))), IVar (Para (v, i)))) (down bound) )
@@ -78,15 +87,6 @@ let sink : edge -> node = function
 (** retrive the int of a node *)
 let nodeToInt : node -> int = function
 	| Vertex n -> n
-
-(** auxiliary tools: down and upt*)
-let rec down : int -> int list = function 
-	| 0 -> [0]
-	| n -> (down (n-1))@[n]
-
-let rec upt (f : int) (t : int) : int list =
-	if f > t then []
-	else f :: upt (f+1) t
 
 
 (*********************************** rbFIFO GSTE assertion graph *******************************************)
