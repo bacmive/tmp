@@ -3,7 +3,7 @@
 type var = 
 	| Ident of string
 	| Para of var * int 
-	| Filed of var * string 
+	| Field of var * string 
 
 
 (** Constant Type*)
@@ -153,7 +153,7 @@ let rec scalarToBool : scalar -> bool = function
 	| _ -> false
 
 (** auxiliary method for assignment, statement *)
-(** retrive corresponding expression of var in assignment list *)
+(** retrive expression of corresponding var in assignment list *)
 let rec valOf (asgns : assign list) (v :var) : expression =
 	match asgns with
 	[] -> IVar v
@@ -383,3 +383,14 @@ let tagFunOfRbFifo (i : int) (n : node): formula list =
 (** verification on SMT*)
 
 (** expression TO Z3 expression *)
+open Z3.BitVector
+open Z3.Z3Array
+let chaos = ()
+let head = ()
+let tail = ()
+let plusN head n = ()
+let empty = ()
+let full = ()
+let mem = ()
+let push = ()
+let pop = ()

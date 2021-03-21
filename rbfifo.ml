@@ -1,0 +1,174 @@
+(********************************* Types ********************************************)
+(** Variable Type*)
+type var = 
+	| Ident of string
+	| Para of var * int 
+	| Field of var * string 
+	
+
+(** Constant Type*)
+type scalar = 
+	| Index of int 
+	| BoolV of bool
+	| TopVal 
+	| BottomVal
+
+(* expression and formula *)
+type expression = 
+    | IVar of var 
+    | Const of scalar
+    | IteForm of formula * expression * expression
+    | Uif of string * expression list
+    | Top
+    | Unknown
+and formula = 
+    | Eqn of expression * expression 
+    | Uip of string * expression list 
+    | AndForm of formula * formula 
+    | Neg of formula 
+    | OrForm of formula * formula 
+    | ImplyForm of formula * formula 
+    | Chaos
+
+(* case expression *)
+type formulaExpPair = formula * expression
+
+let rec caseExpression : formulaExpPair list -> expression = function
+  | [] -> Unknown
+  | (f, e)::t -> IteForm (f, e, (caseExpression t))
+
+
+(* assignment *)
+type assign = Assign of var * expression
+
+(* statement *)
+type statement =
+  | Parallel of assign list
+  | If of formula * statement * statement
+
+(* case statement *)
+type formulaStaPair = formula * statement
+
+let skip = Parallel []
+
+let rec caseStatement : formulaStaPair list -> statement = function
+  | [] -> skip
+  | (f, gS)::t -> If (f, gS, (caseStatement t))
+
+(** Array Manipulation with Expression and Statement*)
+let readArray (v : var) (bound : int) (e : expression) : expression =
+	caseExpression (List.map (fun i -> (Eqn (e, (Const (Index i))), IVar (Para (v, i)))) (down bound) )
+
+let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression) : assign list =
+	List.map 
+        (fun i -> Assign((Para(v, i)), IteForm (Eqn (addressE, Const (Index i)), ce, (IVar (Para (v, i)))))) 
+        (down bound)
+
+(*********************************** GSTE assertion graph *******************************************)
+type node = Vertex of int
+type edge = Edge of node * node
+
+(** the source node of an edge and the sink node of an edge*)
+let source : edge -> node = function
+    | Edge (n, _) -> n
+
+let sink : edge -> node = function
+    | Edge (_, n) -> n
+
+(** retrive the int of a node *)
+let nodeToInt : node -> int = function
+	| Vertex n -> n
+
+(** auxiliary tools: down and upt*)
+let rec down : int -> int list = function 
+	| 0 -> [0]
+	| n -> (down (n-1))@[n]
+
+let rec upt (f : int) (t : int) : int list =
+	if f > t then []
+	else f :: upt (f+1) t
+
+
+(*********************************** rbFIFO GSTE assertion graph *******************************************)
+let mem : var = Ident "mem"
+
+let rst : expression = IVar (Ident "reset")
+let push : expression = IVar (Ident "push")
+let pop : expression = IVar (Ident "pop")
+let dataIn : expression = IVar (Ident "dataIn")
+let low : expression = Const (BoolV false)
+let high : expression = Const (BoolV true)
+let empty : expression = IVar (Ident "empty")
+let full : expression = IVar (Ident "full")
+let tail : expression = IVar (Ident "tail")
+let head : expression = IVar (Ident "head")
+
+let fullFormula : formula = Eqn (full, high)
+let rstFormula : formula = Eqn (rst, high)
+let emptyFormula : formula = Eqn (empty, high)
+let pushFormula : formula = AndForm (AndForm (Eqn (rst, low), Eqn (push, high)), Eqn (pop, low)) 
+let popFormula : formula = AndForm (AndForm (Eqn (rst, low), Eqn (push, low)), Eqn (pop, high))
+let noPopPushFormula : formula = AndForm (AndForm (Eqn (rst, low), Eqn (push, low)), Eqn (pop, low))
+let noFullFormula :formula = Neg fullFormula
+let noEmptyFormula : formula = Neg emptyFormula
+
+let dataOut : int -> expression = function 
+	| depth -> readArray (Ident "mem") depth (IVar (Ident "head"))
+
+let pushDataFormula : int -> formula = function 
+	| i -> AndForm (pushFormula, Eqn (dataIn, Const (Index i)))
+
+let popDataFormula (i : int)  (depth : int) : formula = 
+	Eqn ((dataOut depth), Const (Index i)) 
+
+let last = 3
+let vectexI = Vertex 0
+let vectexL = vectexI :: (List.map (fun i -> Vertex i) (upt 1 3))
+
+let edgeL = 
+	let e1 = Edge (Vertex 0, Vertex 1) in
+	let e2 = Edge (Vertex 1, Vertex 3) in 
+	let e3 = Edge (Vertex 1, Vertex 4) in
+	let e4_list = List.map (fun i -> Edge (Vertex (2*i+1), Vertex (2*i+1) )) (upt 0 (last+1)) in (*self loop*)
+	let e5_list = List.map (fun i -> Edge (Vertex (2*i+2), Vertex (2*i+2) )) (upt 1 (last+1)) in (*self loop*)
+	let e6_list = List.map (fun i -> Edge (Vertex (2*i+1), Vertex (2*i+3) )) (upt 1 (last)) in  
+	let e7_list = List.map (fun i -> Edge (Vertex (2*i+1), Vertex (2*i+4) )) (upt 0 (last)) in
+	let e8_list = List.map (fun i -> Edge (Vertex (2*i+3), Vertex (2*i+1) )) (upt 0 (last)) in
+	let e9_list = List.map (fun i -> Edge (Vertex (2*i+4), Vertex (2*i+2) )) (upt 1 (last)) in
+	let e10 = Edge (Vertex 4, Vertex 1) in
+	[e1; e2; e3; e10]@e4_list@e5_list@e6_list@e7_list@e8_list@e9_list
+
+let antOfRbFifo (d : int) (e : edge) : formula =
+	let f = nodeToInt (source e) in
+	let t = nodeToInt (sink e) in 
+	(	
+		if (f = 0) then rstFormula 
+		else if (f = t) then noPopPushFormula 
+		else if ((f mod 2)=1) then 
+		(	
+			if ((f + 2)=t) then pushFormula 
+			else if (f=(t+2)) then popFormula
+			else pushDataFormula d
+		)
+		else popFormula
+	)
+
+let consOfRbFifo (d : int) (e :edge) : formula =
+	let f = nodeToInt (source e) in
+	let t = nodeToInt (sink e) in
+	(
+		if ( (f mod 2) = 1 && (t mod 2) = 1 ) then 
+		(
+			if f = 1 then AndForm (emptyFormula, noFullFormula)
+			else if f = (2*last +3) then AndForm (noEmptyFormula, fullFormula)
+			else AndForm (noEmptyFormula, noFullFormula)
+		)
+		else if ( f = 4 && t = 1 ) then popDataFormula last d
+		else if ( f = (2*last+4) ) then AndForm (noEmptyFormula, fullFormula)
+		else if ( f = 1 ) then AndForm (emptyFormula, noFullFormula)
+		else if ( f <> 0) then AndForm (noEmptyFormula, noFullFormula)
+		else Chaos
+	)
+	
+let rbFifoGsteSpec ( d : int ) : gsteSpec = 
+	Graph (vectexI, edgeL, antOfRbFifo d, consOfRbFifo d)
