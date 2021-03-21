@@ -183,6 +183,6 @@ let () =
 	let rec prt vls = 
 	match vls with
 	[] -> print_endline ""
-	| (Vertex i) :: t -> print_endline (string_of_int i) :: prt t in
+	| (Vertex i) :: t -> print_endline (string_of_int i);  prt t in
 	prt vectexL
 	
