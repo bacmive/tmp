@@ -178,4 +178,4 @@ let rbFifoGsteSpec ( d : int ) : gsteSpec =
 	Graph (vectexI, edgeL, antOfRbFifo d, consOfRbFifo d)
 
 let () =
-	List.map (fun (Vertex i) -> print_endline (string_of_int i)) vectexL
+	List.map (fun a -> match a with (Vertex i) -> print_endline (string_of_int i)) vectexL
