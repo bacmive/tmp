@@ -8,7 +8,7 @@ type var =
 
 (** Constant Type*)
 type scalar = 
-	| Index of int 
+	| Int of int 
 	| BoolV of bool
 	| TopVal 
 	| BottomVal
@@ -66,11 +66,11 @@ let rec upt (f : int) (t : int) : int list =
 	
 (** Array Manipulation with Expression and Statement*)
 let readArray (v : var) (bound : int) (e : expression) : expression =
-	caseExpression (List.map (fun i -> (Eqn (e, (Const (Index i))), IVar (Para (v, i)))) (down bound) )
+	caseExpression (List.map (fun index -> (Eqn (e, (Const (Int index))), IVar (Para (v, index)))) (down bound) )
 
 let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression) : assign list =
 	List.map 
-        (fun i -> Assign((Para(v, i)), IteForm (Eqn (addressE, Const (Index i)), ce, (IVar (Para (v, i)))))) 
+        (fun i -> Assign((Para(v, i)), IteForm (Eqn (addressE, Const (Int i)), ce, (IVar (Para (v, i)))))) 
         (down bound)
 
 (*********************************** GSTE assertion graph *******************************************)
@@ -117,17 +117,17 @@ let noFullFormula :formula = Neg fullFormula
 let noEmptyFormula : formula = Neg emptyFormula
 
 let dataOut : int -> expression = function 
-	| depth -> readArray (Ident "mem") depth (IVar (Ident "head"))
+	| depth -> readArray mem depth head
 
 let pushDataFormula : int -> formula = function 
-	| i -> AndForm (pushFormula, Eqn (dataIn, Const (Index i)))
+	| d -> AndForm (pushFormula, Eqn (dataIn, Const (Int d)))
 
-let popDataFormula (i : int)  (depth : int) : formula = 
-	Eqn ((dataOut depth), Const (Index i)) 
+let popDataFormula (d : int)  (depth : int) : formula = 
+	Eqn ((dataOut depth), Const (Int d)) 
 
 let last = 3
 let vectexI = Vertex 0
-let vectexL = vectexI :: (List.map (fun i -> Vertex i) (upt 1 3))
+let vectexL = [vectexI; Vertex 0]@(List.map (fun i -> Vertex i) (upt 3 2*last+4))
 
 let edgeL = 
 	let e1 = Edge (Vertex 0, Vertex 1) in
