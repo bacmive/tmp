@@ -127,7 +127,7 @@ let popDataFormula (d : int)  (depth : int) : formula =
 
 let last = 3
 let vectexI = Vertex 0
-let vectexL = [vectexI; Vertex 0]@(List.map (fun i -> Vertex i) (upt 3 2*last+4))
+let vectexL = [vectexI; (Vertex 1)]@(List.map (fun i -> Vertex i) (upt 3 2*last+4))
 
 let edgeL = 
 	let e1 = Edge (Vertex 0, Vertex 1) in
