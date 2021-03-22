@@ -260,7 +260,7 @@ and form2z3expr (ctx:Z3.context) (f : formula)  =
 	| Neg f -> Boolean.mk_not ctx (form2z3expr ctx f)
 	| OrForm (f1, f2) -> Boolean.mk_or ctx [(form2z3expr ctx f1); (form2z3expr ctx f2)]
 	| ImplyForm (f1, f2) -> Boolean.mk_implies ctx (form2z3expr ctx f1) (form2z3expr ctx f2)
-	| Chaos -> Boolean.mk_true
+	| Chaos -> Boolean.mk_true ctx
 	| _ -> raise InvalidExpression
 	
 
