@@ -216,7 +216,7 @@ let tagFunOfRbFifo (d : int) (n : node) : formula list =
 
 (*********************************** rbFIFO GSTE SMT solve *******************************************)
 (** expression and formula To SMT's Expr *)
-(**
+
 open Z3
 open Z3.Boolean
 open Z3.Expr
@@ -225,33 +225,44 @@ open Z3.Arithmatic
 open Printf
 exception InvalidExpression
 
-let rec expr2z3Expr (e : expression) (ctx:Z3.context) = 
+let rec expr2z3Expr (ctx:Z3.context) (e : expression)  = 
 	match e with 
 	IVar v -> (
 				match v with 
 				BoolV str -> Boolean.mk_const_s ctx "str"
-				| IntV str -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx 2)
-				| ArrayV str -> Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx) (Arithmatic.Integer.mk_sort ctx)
-				| ParaV (varr, index) -> (
+				| DataV str -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx 1)
+				| IndexV str -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx 2)
+				| ArrayV str -> Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx 2) (BitVector.mk_sort ctx 1)
+				| ParaV (varr, sclr) -> (
 											match varr with 
-											ArrayV str -> Z3Array.mk_select ctx 
-														Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx) (Arithmatic.Integer.mk_sort ctx)
-														Expr.mk_numeral_int ctx index (BitVector.mk_sort ctx 2)
+											ArrayV str -> (
+															match sclr with
+															IndexC index -> Z3Array.mk_select ctx 
+																		Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx 2) (BitVector.mk_sort ctx 1)
+																		Expr.mk_numeral_int ctx index (BitVector.mk_sort ctx 2)
+															|_ -> raise InvalidExpression
+														)
 											|_ -> raise InvalidExpression					
 										)
 			)
 	| Const s -> ( 
 				match s with 
-				IntC i -> 
-				| BoolC  -> ()
+				DataC d ->  Expr.mk_numeral_int ctx d (BitVector.mk_sort ctx 1)
+				| IndexC i -> Expr.mk_numeral_int ctx i (BitVector.mk_sort ctx 2)
+				| BoolC b -> if b then Boolean.mk_true ctx else Boolean.mk_false ctx
 			)
-	| IteForm (f, e1, e2) -> form2z3expr e1
-	| _ -> ()
-and form2z3expr (f : formula) (ctx:Z3.context) =
+	| IteForm (f, e1, e2) -> Boolean.mk_ite ctx (form2z3expr ctx f) ( expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
+	| _ -> raise InvalidExpression
+and form2z3expr (ctx:Z3.context) (f : formula)  =
 	match f with 
-	Eqn (e1, e2) -> expr2z3Expr e1
-	| _ -> ()
-*)
+	Eqn (e1, e2) -> Boolean.mk_eq ctx (expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
+	| AndForm (f1, f2) -> Boolean.mk_and ctx [(form2z3expr ctx f1); (form2z3expr ctx f2)]
+	| Nef f -> Boolean.mk_not ctx (form2z3expr ctx f)
+	| OrForm (f1, f2) -> Boolean.mk_or ctx (form2z3expr ctx f1) (form2z3expr ctx f2)
+	| ImplyForm (f1, f2) -> Boolean.mk_implies ctx (form2z3expr ctx f1) (form2z3expr ctx f2)
+	| Chaos -> Boolean.mk_true
+	| _ -> raise InvalidExpression
+	
 
 let () = 
 	let rec prt vls = 
@@ -259,4 +270,5 @@ let () =
 	[] -> ()
 	| (Vertex i) :: t -> print_endline (string_of_int i);  prt t in
 	prt vectexL
+
 	
