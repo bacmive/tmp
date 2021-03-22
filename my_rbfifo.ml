@@ -238,8 +238,8 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 											ArrayV str -> (
 															match sclr with
 															IndexC index -> Z3Array.mk_select ctx 
-																		Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx 2) (BitVector.mk_sort ctx 1)
-																		Expr.mk_numeral_int ctx index (BitVector.mk_sort ctx 2)
+																		(Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx 2) (BitVector.mk_sort ctx 1))
+																		(Expr.mk_numeral_int ctx index (BitVector.mk_sort ctx 2))
 															|_ -> raise InvalidExpression
 														)
 											|_ -> raise InvalidExpression					
