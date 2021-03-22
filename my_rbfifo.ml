@@ -255,7 +255,7 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 			)
 	| Uif (str, expr)-> (
 							match expr with 
-							h1::h2::[] -> BitVector.mk_add ctx h1 h2
+							h1::h2::[] -> BitVector.mk_add ctx (expr2z3Expr ctx h1) (expr2z3Expr ctx h2)
 							| _ -> raise InvalidExpression
 						)	
 	| IteForm (f, e1, e2) -> Boolean.mk_ite ctx (form2z3expr ctx f) ( expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
