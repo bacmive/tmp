@@ -69,11 +69,11 @@ let rec upt (f : int) (t : int) : int list =
 	
 (** Array Manipulation with Expression and Statement*)
 let readArray (v : var) (bound : int) (e : expression) : expression =
-	caseExpression (List.map (fun index -> (Eqn (e, (Const (IntC index))), IVar (Para (v, index)))) (down bound) )
+	caseExpression (List.map (fun index -> (Eqn (e, (Const (IntC index))), IVar (ParaV (v, index)))) (down bound) )
 
 let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression) : assign list =
 	List.map 
-        (fun i -> Assign((Para(v, i)), IteForm (Eqn (addressE, Const (IntC i)), ce, (IVar (Para (v, i)))))) 
+        (fun i -> Assign((ParaV(v, i)), IteForm (Eqn (addressE, Const (IntC i)), ce, (IVar (ParaV (v, i)))))) 
         (down bound)
 
 (*********************************** GSTE assertion graph *******************************************)
