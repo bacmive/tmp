@@ -224,9 +224,7 @@ let rec expr2z3Expr (e : expression) =
 			BoolV str -> print_endline str
 			| IntV str -> print_endline str
 			| ArrayV str -> print_endline str
-			| ParaV (v, i) -> match v with 
-							ArrayV str -> print_endline str
-							| _ -> ()
+			| ParaV (v, i) -> ()
 	| Const s -> match s with 
 				IntC i -> print_int i
 				| BoolC  -> ()
