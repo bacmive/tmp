@@ -177,6 +177,37 @@ let consOfRbFifo (d : int) (e :edge) : formula =
 let rbFifoGsteSpec ( d : int ) : gsteSpec = 
 	Graph (vectexI, edgeL, antOfRbFifo d, consOfRbFifo d)
 
+(*********************************** rbFIFO GSTE tag function *******************************************)
+let rec applyPlusN (e : expression) (n : int) : expression = 
+	if n = 0 then e 
+	else Uif ("+", [applyPlusN e (n-1) ; Const (Int 1)])
+
+let tagFunOfRbFifo (d : int) (n : node) : formula list = 
+	let dataI = Const (Int d) in 
+	let lastV = Const (Int last) in 
+	let x = nodeToInt n in
+	(
+		if (x=0) then []
+		else 
+		(
+			if ( (x mod 2)=1 ) then 
+			(
+				if ( x=1 ) then [ Eqn (tail, head); Eqn (empty, high); Eqn (full, low); Uip ("le", [head; lastV]) ] 
+				else 
+				(
+					if ( x=(2*last+3) ) then [Eqn (tail, head); Eqn (empty, low); Eqn (full, high); Uip ("le", [head; lastV])]
+					else [Eqn (tail, applyPlusN head (x/2)); Eqn (empty, low); Eqn (full, low)]
+				)
+			)
+			else
+			(
+				if( x=(2*last +4) ) then [Eqn (tail, head); Eqn (empty, low); Eqn (full, high); Eqn (readArray mem last (applyPlusN head last)); Eqn (readArray mem last applyPlusN(head, last), dataI); Uip ("le", [head; lastV])]
+				else [Eqn (tail, applyPlusN head (x/2-1)); Eqn (empty, low); Eqn (full, low); Eqn (readArray mem last (applyPlusN head (x/2-2)), dataI); Uip ("le", [head; lastV])]
+			)
+		)
+	)
+
+
 
 
 let () = 
