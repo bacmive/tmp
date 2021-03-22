@@ -213,6 +213,7 @@ let tagFunOfRbFifo (d : int) (n : node) : formula list =
 
 (*********************************** rbFIFO GSTE SMT solve *******************************************)
 (** expression and formula To SMT's Expr *)
+(**
 open Z3
 open Z3.Boolean
 open Z3.Expr
@@ -222,7 +223,7 @@ let expr2z3Expr (e : expression) : Expr.expr =
 	IVar v -> match v with
 			Ident str -> 
 	
-
+*)
 
 let () = 
 	let rec prt vls = 
