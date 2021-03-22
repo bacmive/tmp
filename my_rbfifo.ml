@@ -1,14 +1,16 @@
 (********************************* Types ********************************************)
 (** Variable Type*)
 type var = (* symbol *)
-	| Ident of string 
-	| Para of var * int  
+	| BoolV of string 
+	| IntV  of string
+	| ArrayV of string
+	| ParaV of var * int  
 	(* | Field of var * string *)
 	
 (** Constant Type*)
 type scalar = 
-	| Int of int 
-	| BoolV of bool
+	| IntC of int 
+	| BoolC of bool
 	(*
 		| TopVal 
 		| BottomVal
@@ -67,11 +69,11 @@ let rec upt (f : int) (t : int) : int list =
 	
 (** Array Manipulation with Expression and Statement*)
 let readArray (v : var) (bound : int) (e : expression) : expression =
-	caseExpression (List.map (fun index -> (Eqn (e, (Const (Int index))), IVar (Para (v, index)))) (down bound) )
+	caseExpression (List.map (fun index -> (Eqn (e, (Const (IntC index))), IVar (Para (v, index)))) (down bound) )
 
 let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression) : assign list =
 	List.map 
-        (fun i -> Assign((Para(v, i)), IteForm (Eqn (addressE, Const (Int i)), ce, (IVar (Para (v, i)))))) 
+        (fun i -> Assign((Para(v, i)), IteForm (Eqn (addressE, Const (IntC i)), ce, (IVar (Para (v, i)))))) 
         (down bound)
 
 (*********************************** GSTE assertion graph *******************************************)
@@ -95,18 +97,18 @@ let nodeToInt : node -> int = function
 
 
 (*********************************** rbFIFO GSTE assertion graph *******************************************)
-let mem : var = Ident "mem"
+let mem : var = Array "mem"
 
-let rst : expression = IVar (Ident "reset")
-let push : expression = IVar (Ident "push")
-let pop : expression = IVar (Ident "pop")
-let dataIn : expression = IVar (Ident "dataIn")
-let low : expression = Const (BoolV false)
-let high : expression = Const (BoolV true)
-let empty : expression = IVar (Ident "empty")
-let full : expression = IVar (Ident "full")
-let tail : expression = IVar (Ident "tail")
-let head : expression = IVar (Ident "head")
+let rst : expression = IVar (BoolV "reset")
+let push : expression = IVar (BoolV "push")
+let pop : expression = IVar (BoolV "pop")
+let dataIn : expression = IVar (IntV "dataIn")
+let low : expression = Const (BoolC false)
+let high : expression = Const (BoolC true)
+let empty : expression = IVar (BoolV "empty")
+let full : expression = IVar (BoolV "full")
+let tail : expression = IVar (IntV "tail")
+let head : expression = IVar (IntV "head")
 
 let fullFormula : formula = Eqn (full, high)
 let rstFormula : formula = Eqn (rst, high)
@@ -121,10 +123,10 @@ let dataOut : int -> expression = function
 	| depth -> readArray mem depth head
 
 let pushDataFormula : int -> formula = function 
-	| d -> AndForm (pushFormula, Eqn (dataIn, Const (Int d)))
+	| d -> AndForm (pushFormula, Eqn (dataIn, Const (IntC d)))
 
 let popDataFormula (d : int)  (depth : int) : formula = 
-	Eqn ((dataOut depth), Const (Int d)) 
+	Eqn ((dataOut depth), Const (IntC d)) 
 
 let last = 3
 let vectexI = Vertex 0
@@ -181,11 +183,11 @@ let rbFifoGsteSpec ( d : int ) : gsteSpec =
 (*********************************** rbFIFO GSTE tag function *******************************************)
 let rec applyPlusN (e : expression) (n : int) : expression = 
 	if n = 0 then e 
-	else Uif ("+", [applyPlusN e (n-1) ; Const (Int 1)])
+	else Uif ("+", [applyPlusN e (n-1) ; Const (IntC 1)])
 
 let tagFunOfRbFifo (d : int) (n : node) : formula list = 
-	let dataI = Const (Int d) in 
-	let lastV = Const (Int last) in 
+	let dataI = Const (IntC d) in 
+	let lastV = Const (IntC last) in 
 	let x = nodeToInt n in
 	(
 		if (x=0) then []
