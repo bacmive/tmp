@@ -2,14 +2,16 @@
 (** Variable Type*)
 type var = (* symbol *)
 	| BoolV of string 
-	| IntV  of string
+	| DataV  of string
+	| IndexV of string
 	| ArrayV of string
-	| ParaV of var * int  
+	| ParaV of var * var  
 	(* | Field of var * string *)
 	
 (** Constant Type*)
 type scalar = 
-	| IntC of int 
+	| DataC of int 
+	| IndexC of int
 	| BoolC of bool
 	(*
 		| TopVal 
@@ -69,11 +71,11 @@ let rec upt (f : int) (t : int) : int list =
 	
 (** Array Manipulation with Expression and Statement*)
 let readArray (v : var) (bound : int) (e : expression) : expression =
-	caseExpression (List.map (fun index -> (Eqn (e, (Const (IntC index))), IVar (ParaV (v, index)))) (down bound) )
+	caseExpression (List.map (fun index -> (Eqn (e, (Const (IndexC index))), IVar (ParaV (v, IndexV index)))) (down bound) )
 
 let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression) : assign list =
 	List.map 
-        (fun i -> Assign((ParaV(v, i)), IteForm (Eqn (addressE, Const (IntC i)), ce, (IVar (ParaV (v, i)))))) 
+        (fun i -> Assign((ParaV(v, IndexV i)), IteForm (Eqn (addressE, Const (IndexC i)), ce, (IVar (ParaV (v, IndexV i)))))) 
         (down bound)
 
 (*********************************** GSTE assertion graph *******************************************)
@@ -102,13 +104,13 @@ let mem : var = ArrayV "mem"
 let rst : expression = IVar (BoolV "reset")
 let push : expression = IVar (BoolV "push")
 let pop : expression = IVar (BoolV "pop")
-let dataIn : expression = IVar (IntV "dataIn")
+let dataIn : expression = IVar (DataV "dataIn")
 let low : expression = Const (BoolC false)
 let high : expression = Const (BoolC true)
 let empty : expression = IVar (BoolV "empty")
 let full : expression = IVar (BoolV "full")
-let tail : expression = IVar (IntV "tail")
-let head : expression = IVar (IntV "head")
+let tail : expression = IVar (IndexV "tail")
+let head : expression = IVar (IndexV "head")
 
 let fullFormula : formula = Eqn (full, high)
 let rstFormula : formula = Eqn (rst, high)
@@ -123,10 +125,10 @@ let dataOut : int -> expression = function
 	| depth -> readArray mem depth head
 
 let pushDataFormula : int -> formula = function 
-	| d -> AndForm (pushFormula, Eqn (dataIn, Const (IntC d)))
+	| d -> AndForm (pushFormula, Eqn (dataIn, Const (DataC d)))
 
 let popDataFormula (d : int)  (depth : int) : formula = 
-	Eqn ((dataOut depth), Const (IntC d)) 
+	Eqn ((dataOut depth), Const (DataC d)) 
 
 let last = 3
 let vectexI = Vertex 0
@@ -183,11 +185,11 @@ let rbFifoGsteSpec ( d : int ) : gsteSpec =
 (*********************************** rbFIFO GSTE tag function *******************************************)
 let rec applyPlusN (e : expression) (n : int) : expression = 
 	if n = 0 then e 
-	else Uif ("+", [applyPlusN e (n-1) ; Const (IntC 1)])
+	else Uif ("+", [applyPlusN e (n-1) ; Const (IndexC 1)])
 
 let tagFunOfRbFifo (d : int) (n : node) : formula list = 
-	let dataI = Const (IntC d) in 
-	let lastV = Const (IntC last) in 
+	let dataI = Const (DataC d) in 
+	let lastV = Const (IndexC last) in 
 	let x = nodeToInt n in
 	(
 		if (x=0) then []
@@ -216,21 +218,34 @@ let tagFunOfRbFifo (d : int) (n : node) : formula list =
 open Z3
 open Z3.Boolean
 open Z3.Expr
+open Z3.Z3Array
+open Z3.Arithmatic
 open Printf
+exception InvalidExpression
 
-let rec expr2z3Expr (e : expression) = 
+let rec expr2z3Expr (e : expression) (ctx:Z3.context) = 
 	match e with 
-	IVar v -> match v with
-			BoolV str -> print_endline str
-			| IntV str -> print_endline str
-			| ArrayV str -> print_endline str
-			| ParaV (v, i) -> ()
-	| Const s -> match s with 
-				IntC i -> print_int i
+	IVar v -> (
+				match v with 
+				BoolV str -> Boolean.mk_const_s ctx "str"
+				| IntV str -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx 2)
+				| ArrayV str -> Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx) (Arithmatic.Integer.mk_sort ctx)
+				| ParaV (varr, index) -> (
+											match varr with 
+											ArrayV str -> Z3Array.mk_select ctx 
+														Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx) (Arithmatic.Integer.mk_sort ctx)
+														Expr.mk_numeral_int ctx index (BitVector.mk_sort ctx 2)
+											|_ -> raise InvalidExpression					
+										)
+			)
+	| Const s -> ( 
+				match s with 
+				IntC i -> 
 				| BoolC  -> ()
+			)
 	| IteForm (f, e1, e2) -> form2z3expr e1
 	| _ -> ()
-and form2z3expr (f : formula) =
+and form2z3expr (f : formula) (ctx:Z3.context) =
 	match f with 
 	Eqn (e1, e2) -> expr2z3Expr e1
 	| _ -> ()
