@@ -215,6 +215,7 @@ let tagFunOfRbFifo (d : int) (n : node) : formula list =
 
 (*********************************** rbFIFO GSTE SMT solve *******************************************)
 (** expression and formula To SMT's Expr *)
+(**
 open Z3
 open Z3.Boolean
 open Z3.Expr
@@ -249,7 +250,7 @@ and form2z3expr (f : formula) (ctx:Z3.context) =
 	match f with 
 	Eqn (e1, e2) -> expr2z3Expr e1
 	| _ -> ()
-	
+*)
 
 let () = 
 	let rec prt vls = 
