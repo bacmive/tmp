@@ -213,17 +213,30 @@ let tagFunOfRbFifo (d : int) (n : node) : formula list =
 
 (*********************************** rbFIFO GSTE SMT solve *******************************************)
 (** expression and formula To SMT's Expr *)
-(**
 open Z3
 open Z3.Boolean
 open Z3.Expr
+open Printf
 
-let expr2z3Expr (e : expression) : Expr.expr = 
+let rec expr2z3Expr (e : expression) = 
 	match e with 
 	IVar v -> match v with
-			Ident str -> 
+			BoolV str -> print_endline str
+			| IntV str -> print_endline str
+			| ArrayV str -> print_endline str
+			| ParaV (v, i) -> match v with 
+							ArrayV str -> print_endline str
+							| _ -> ()
+	| Const s -> match s with 
+				IntC i -> print_int i
+				| BoolC  -> ()
+	| IteForm (f, e1, e2) -> form2z3expr e1
+	| _ -> ()
+and form2z3expr (f : formula) =
+	match f with 
+	Eqn (e1, e2) -> expr2z3Expr e1
+	| _ -> ()
 	
-*)
 
 let () = 
 	let rec prt vls = 
