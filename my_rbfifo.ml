@@ -221,7 +221,7 @@ open Z3
 open Z3.Boolean
 open Z3.Expr
 open Z3.Z3Array
-open Z3.Arithmatic
+open Z3.Arithmetic
 open Printf
 exception InvalidExpression
 
