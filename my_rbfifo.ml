@@ -253,14 +253,11 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 				| IndexC i -> Expr.mk_numeral_int ctx i (BitVector.mk_sort ctx 2)
 				| BoolC b -> if b then Boolean.mk_true ctx else Boolean.mk_false ctx
 			)
-	| Uif (str, expr) -> (
-							if String.equal str "+" then (
-								match expr with 
-								h1::h2::[] -> BitVector.mk_add ctx h1 h2
-								| _ -> raise InvalidExpression
-							)
-							else raise UnfoundFunction
-						)
+	| Uif (str, expr)-> (
+							match expr with 
+							h1::h2::[] -> BitVector.mk_add ctx h1 h2
+							| _ -> raise InvalidExpression
+						)	
 	| IteForm (f, e1, e2) -> Boolean.mk_ite ctx (form2z3expr ctx f) ( expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
 	| _ -> raise InvalidExpression
 and form2z3expr (ctx:Z3.context) (f : formula)  =
