@@ -1,13 +1,5 @@
 (********************************* Types ********************************************)
-(** Variable Type*)
-type var = (* symbol *)
-	| BoolV of string 
-	| DataV  of string
-	| IndexV of string
-	| ArrayV of string
-	| ParaV of var * var  
-	(* | Field of var * string *)
-	
+
 (** Constant Type*)
 type scalar = 
 	| DataC of int 
@@ -17,6 +9,15 @@ type scalar =
 		| TopVal 
 		| BottomVal
 	*)
+
+(** Variable Type*)
+type var = (* symbol *)
+	| BoolV of string 
+	| DataV  of string
+	| IndexV of string
+	| ArrayV of string
+	| ParaV of var * scalar  
+	(* | Field of var * string *)
 
 (* expression and formula *)
 type expression = 
@@ -71,11 +72,11 @@ let rec upt (f : int) (t : int) : int list =
 	
 (** Array Manipulation with Expression and Statement*)
 let readArray (v : var) (bound : int) (e : expression) : expression =
-	caseExpression (List.map (fun index -> (Eqn (e, (Const (IndexC index))), IVar (ParaV (v, IndexV index)))) (down bound) )
+	caseExpression (List.map (fun index -> (Eqn (e, (Const (IndexC index))), IVar (ParaV (v, IndexC index)))) (down bound) )
 
 let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression) : assign list =
 	List.map 
-        (fun i -> Assign((ParaV(v, IndexV i)), IteForm (Eqn (addressE, Const (IndexC i)), ce, (IVar (ParaV (v, IndexV i)))))) 
+        (fun i -> Assign((ParaV(v, IndexC i)), IteForm (Eqn (addressE, Const (IndexC i)), ce, (IVar (ParaV (v, IndexC i)))))) 
         (down bound)
 
 (*********************************** GSTE assertion graph *******************************************)
