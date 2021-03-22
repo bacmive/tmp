@@ -97,7 +97,7 @@ let nodeToInt : node -> int = function
 
 
 (*********************************** rbFIFO GSTE assertion graph *******************************************)
-let mem : var = Array "mem"
+let mem : var = ArrayV "mem"
 
 let rst : expression = IVar (BoolV "reset")
 let push : expression = IVar (BoolV "push")
