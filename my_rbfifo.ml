@@ -269,14 +269,7 @@ and form2z3expr (ctx:Z3.context) (f : formula)  =
 	| ImplyForm (f1, f2) -> Boolean.mk_implies ctx (form2z3expr ctx f1) (form2z3expr ctx f2)
 	| Chaos -> Boolean.mk_true ctx
 	| _ -> raise InvalidExpression
-	
-let m n = match n with 
-	Int i -> print_int i
-	| Ints (str, expr) -> (
-		match expr with
-		[] | _::[] -> print_endline "wrong"
-		|h::t -> print_endline "yes"
-	)	
+		
 
 let () = 
 	let rec prt vls = 
