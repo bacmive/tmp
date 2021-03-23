@@ -309,7 +309,11 @@ let models () =
 			let res = List.map (fun e -> Model.eval t e true) (assertions ctx) in
 			let rec print_list = function
 			[] -> ()
-			| e::l -> Printf.printf "%s\n" (Expr.to_string e); print_list l
+			| e::l -> (
+					match e with 
+					|Some ee -> Printf.printf "%s\n" (Expr.to_string e); print_list l
+					|None -> Printf.printf "wrong\n"
+				)
 			in 
 			print_list res 
 		)
