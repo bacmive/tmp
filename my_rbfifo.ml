@@ -311,7 +311,7 @@ let models () =
 			[] -> ()
 			| e::l -> (
 					match e with 
-					|Some ee -> Printf.printf "%s\n" (Expr.to_string e); print_list l
+					|Some ee -> Printf.printf "%s\n" (Expr.to_string ee); print_list l
 					|None -> Printf.printf "wrong\n"
 				)
 			in 
