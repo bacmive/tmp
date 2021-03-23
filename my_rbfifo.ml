@@ -296,19 +296,11 @@ let assertions (ctx : Z3.context) =
 let models () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
-	(*
-	let get_all_models (c : Z3.context) (s : Solver.solver) = 
-		Solver.add s (assertions c); 
-		match Solver.get_model s with
-		| Some m -> Printf.printf "%s\n" (Model.to_string m)
-		| None ->  Printf.printf "no model\n"
-	in 
-	get_all_models ctx solver
-	*)
-	Solver.add slvr (assertions ctx);
+	Solver.add slvr (assertions ctx); 
+	Printf.printf "%s\n" (Solver.string_of_status (Solver.check slvr []));
 	match Solver.get_model slvr with
 	| Some m -> Printf.printf "%s\n" (Model.to_string m)
-	| None ->  Printf.printf "no model\n"
+	| None -> Printf.printf "no model\n"
 	
 
 
