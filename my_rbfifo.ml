@@ -273,7 +273,6 @@ and form2z3expr (ctx:Z3.context) (f : formula)  =
 							e1::e2::[] -> BitVector.mk_ule ctx (expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
 							| _ -> raise InvalidExpression
 						)
-	| _ -> raise InvalidExpression
 
 (** GSTE assertion graph NODE to formula(tag function) *)
 let tag (ctx : Z3.context) (d : int) (n : node)  = 
