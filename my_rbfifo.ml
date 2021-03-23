@@ -304,7 +304,6 @@ let models () =
 		| None ->  []
 	in 	
 	match get_all_models ctx slvr with
-	|[] ->  raise InvalidExpression
 	| t::[] -> (
 			let res = List.map (fun e -> Model.eval t e true) (assertions ctx) in
 			let rec print_list = function
@@ -317,6 +316,7 @@ let models () =
 			in 
 			print_list res 
 		)
+	|_ ->  raise InvalidExpression
 			
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
