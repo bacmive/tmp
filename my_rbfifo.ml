@@ -289,9 +289,10 @@ let solves () =
 	let slvr = Solver.mk_solver ctx None in
 	let assertions = [Boolean.mk_true ctx; Boolean.mk_false ctx] in
 	Solver.add slvr assertions;
+	Printf.printf "%s\n" (Solver.string_of_status (Solver.check slvr []));
 	match Solver.get_model slvr with
 	| Some m -> Printf.printf "%s\n" (Model.to_string m)
-	| None -> Printf.printf "no model"
+	| None -> Printf.printf "no model\n"
 
 let () = 	
 	let rec prt vls = 
