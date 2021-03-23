@@ -307,15 +307,13 @@ let models () =
 	|[] ->  raise InvalidExpression
 	| t::[] -> (
 			let res = List.map (fun e -> Model.eval t e true) (assertions ctx) in
-			List.map (fun e -> match e with 
-							|Some ec -> Printf.printf "%s\n" (Expr.to_string ec)
-							|None -> Printf.printf "wrong\n"
-						) res
+			let rec print_list = function
+			[] -> ()
+			| e::l -> Printf.printf "%s\n" (Expr.to_string e); print_list l
+			in 
+			print_list res 
 		)
 			
-	
-
-
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
