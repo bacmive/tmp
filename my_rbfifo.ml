@@ -307,7 +307,7 @@ let models () =
 	*)
 	Solver.add slvr (assertions ctx);
 	match Solver.get_model slvr with
-	Some m -> Printf.printf "%s\n" (Model.to_string m)
+	| Some m -> Printf.printf "%s\n" (Model.to_string m)
 	| None ->  Printf.printf "no model\n"
 	
 
