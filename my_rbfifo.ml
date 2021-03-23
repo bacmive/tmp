@@ -322,6 +322,6 @@ let () =
 		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
 	in
 	prt vectexL;
-	models ()
+	solves ()
 
 	
