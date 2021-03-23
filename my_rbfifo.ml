@@ -293,6 +293,17 @@ let assertions (ctx : Z3.context) =
 	[Arithmetic.mk_ge ctx x zero; Arithmetic.mk_le ctx x three; Arithmetic.mk_ge ctx x y; Arithmetic.mk_le ctx x y]
 
 (** get_all_models *)
+let models () =
+	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	let slvr = Solver.mk_solver ctx None in
+	let get_all_models (ctx : Z3.context) (slvr : Solver) = 
+		Solver.add slvr (assertions ctx); 
+		match Solver.get_model slvr with
+		Some m -> Printf.printf "%s\n" (Model.to_string m)
+		| None ->  Printf.printf "no model\n"
+	in 
+	get_all_models ctx slvr
+
 
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
@@ -311,6 +322,6 @@ let () =
 		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
 	in
 	prt vectexL;
-	solves ()
+	models ()
 
 	
