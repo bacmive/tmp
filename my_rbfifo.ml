@@ -298,12 +298,19 @@ let models () =
 	let slvr = Solver.mk_solver ctx None in
 	let get_all_models (c : Z3.context) (s : Solver.solver) = 
 		Solver.add s (assertions c); 
-		Printf.printf "%s\n" (Solver.string_of_status (Solver.check s [])); (*  check before get models *)
+		Printf.printf "%s\n" (Solver.string_of_status (Solver.check s [])); (* check before get models *)
 		match Solver.get_model s with
-		| Some m -> Printf.printf "%s\n" (Model.to_string m)
-		| None ->  Printf.printf "no model\n"
-	in 
-	get_all_models ctx slvr
+		| Some m -> [m;]
+		| None ->  []
+	in 	
+	match get_all_models ctx slvr with
+	|[] ->  raise InvalidExpression
+	| t::[] -> (
+			match Model.eval m (Arithmetic.mk_ge ctx x zero) true  with
+			|Some e -> Printf.printf "%s\n" (Expr.to_string e)
+			| None -> Printf.printf "error"
+			)
+			
 	
 
 
