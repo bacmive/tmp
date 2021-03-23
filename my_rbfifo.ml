@@ -292,6 +292,9 @@ let assertions (ctx : Z3.context) =
 	let y : Expr.expr = Arithmetic.Integer.mk_const_s ctx "y" in
 	[Arithmetic.mk_ge ctx x zero; Arithmetic.mk_le ctx x three; Arithmetic.mk_ge ctx x y; Arithmetic.mk_le ctx x y]
 
+let exprOfAssertions (ctx : Z3.context) = 
+	[ Arithmetic.Integer.mk_const_s ctx "x"; Arithmetic.Integer.mk_const_s ctx "y"]
+
 (** get_all_models *)
 let models () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
@@ -305,18 +308,18 @@ let models () =
 	in 	
 	match get_all_models ctx slvr with
 	| t::[] -> (
-			let res = List.map (fun e -> Model.eval t e true) (assertions ctx) in
+			let res = List.map (fun e -> Model.eval t e true) (exprOfAssertions ctx) in
 			let rec print_list = function
 			[] -> ()
 			| e::l -> (
 					match e with 
-					|Some ee -> Printf.printf "%s\t" (Expr.to_string ee); print_list l
+					|Some ee -> Printf.printf "%s\n" (Expr.to_string ee); print_list l
 					|None -> Printf.printf "wrong\n"
 				)
 			in 
 			print_list res 
 		)
-	|_ ->  raise InvalidExpression
+	| _ -> raise InvalidExpression
 			
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
