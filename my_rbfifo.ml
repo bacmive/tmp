@@ -320,7 +320,29 @@ let models () =
 			print_list res 
 		)
 	| _ -> raise InvalidExpression
-			
+	
+let models2 () =
+	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	let slvr = Solver.mk_solver ctx None in
+	let get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
+		Solver.check s extra_constraints; 
+		match Solver.get_model s with
+		Some m -> (
+					let res = List.map (fun e -> Model.eval t e true) (exprOfAssertions ctx) in
+					let rec print_list = function
+					[] -> ()
+					| e::l -> (
+							match e with 
+							|Some ee -> Printf.printf "%s\n" (Expr.to_string ee); print_list l
+							|None -> Printf.printf "wrong\n"
+						)
+					in 
+					print_list res 
+				)
+		| None -> ()
+	in
+	get_all_models ctx slvr [] 
+		
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
@@ -338,6 +360,6 @@ let () =
 		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
 	in
 	prt vectexL;
-	models ()
+	models2 ()
 
 	
