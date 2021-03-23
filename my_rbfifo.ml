@@ -295,7 +295,7 @@ let assertions (ctx : Z3.context) =
 (** get_all_models *)
 let models () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
-	let solver = Solver.mk_solver ctx None in
+	let slvr = Solver.mk_solver ctx None in
 	(*
 	let get_all_models (c : Z3.context) (s : Solver.solver) = 
 		Solver.add s (assertions c); 
@@ -305,8 +305,8 @@ let models () =
 	in 
 	get_all_models ctx solver
 	*)
-	Solver.add solver (assertions ctx);
-	match Solver.get_model solver with
+	Solver.add slvr (assertions ctx);
+	match Solver.get_model slvr with
 	Some m -> Printf.printf "%s\n" (Model.to_string m)
 	| None ->  Printf.printf "no model\n"
 	
