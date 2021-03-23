@@ -284,15 +284,25 @@ let tag (ctx : Z3.context) (d : int) (n : node)  =
 
 (** GSTE assertion graph and tag function concretization *)
 (** concretize/solve one edge -> check out against graph *)
+
+let assertions (ctx : Z3.Context) = 
+	let zero : Expr.expr = Arithmetic.Integer.mk_numeral_i ctx 0 in
+	let three : Expr.expr = Arithmetic.Integer.mk_numeral_i ctx 3 in
+	let x : Expr.expr = Arithmetic.Integer.mk_const_s ctx "x" in
+	let y : Expr.expr = Arithmetic.Integer.mk_const_s ctx "y" in
+	[Arithmetic.mk_ge ctx x zero; Arithmetic.mk_le ctx x three; Arithmetic.mk_ge ctx x y; Arithmetic.mk_le ctx x y]
+
+(** get_all_models *)
+
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
-	let assertions = [Boolean.mk_true ctx; Boolean.mk_false ctx] in
-	Solver.add slvr assertions;
+	Solver.add slvr (assertions ctx); 
 	Printf.printf "%s\n" (Solver.string_of_status (Solver.check slvr []));
 	match Solver.get_model slvr with
 	| Some m -> Printf.printf "%s\n" (Model.to_string m)
 	| None -> Printf.printf "no model\n"
+
 
 let () = 	
 	let rec prt vls = 
