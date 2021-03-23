@@ -325,8 +325,7 @@ let models2 () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
 	let get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
-		Solver.assert_and_track_l s extra_constraints [];
-		(*Solver.check s extra_constraints; *)
+		ignore Solver.check s extra_constraints; 
 		match Solver.get_model s with
 		Some m -> (
 					let res = List.map (fun e -> Model.eval m e true) (exprOfAssertions ctx) in
