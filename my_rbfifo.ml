@@ -299,10 +299,11 @@ let models () =
 	let get_all_models (c : Z3.context) (s : Solver.solver) = 
 		Solver.add s (assertions c); 
 		match Solver.get_model s with
-		Some m -> Printf.printf "%s\n" (Model.to_string m)
+		| Some m -> Printf.printf "%s\n" (Model.to_string m)
 		| None ->  Printf.printf "no model\n"
 	in 
 	get_all_models ctx solver
+	
 
 
 let solves () =
