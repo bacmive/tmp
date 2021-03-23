@@ -287,13 +287,13 @@ let tag (ctx : Z3.context) (d : int) (n : node)  =
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
-	let assertions = [Boolean.mk_true; Boolean.mk_false] in
+	let assertions = [Boolean.mk_true ctx; Boolean.mk_false ctx] in
 	Solver.add slvr assertions;
 	match Solver.get_model slvr with
 	| Some m -> Printf.printf "%s\n" (Model.to_string m)
 	| None -> Printf.printf "no model"
 
-let () = 
+let () = 	
 	let rec prt vls = 
 		match vls with
 		[] -> ()
