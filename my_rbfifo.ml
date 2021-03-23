@@ -306,10 +306,10 @@ let models () =
 	match get_all_models ctx slvr with
 	|[] ->  raise InvalidExpression
 	| t::[] -> (
-			match Model.eval m (Arithmetic.mk_ge ctx x zero) true  with
+			match Model.eval t (Arithmetic.mk_ge ctx x zero) true  with
 			|Some e -> Printf.printf "%s\n" (Expr.to_string e)
 			| None -> Printf.printf "error"
-			)
+		)
 			
 	
 
