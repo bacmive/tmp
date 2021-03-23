@@ -270,7 +270,7 @@ and form2z3expr (ctx:Z3.context) (f : formula)  =
 	| Chaos -> Boolean.mk_true ctx
 	| Uip (str, expr) -> (
 							match expr with
-							e1::e2::[] -> BitVector.mk_ule ctx (expr2z3Expr e1) (expr2z3Expr e2)
+							e1::e2::[] -> BitVector.mk_ule ctx (expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
 							| _ -> raise InvalidExpression
 						)
 	| _ -> raise InvalidExpression
@@ -279,7 +279,7 @@ and form2z3expr (ctx:Z3.context) (f : formula)  =
 let tag (ctx : Z3.context) (d : int) (n : node)  = 
 	match tagFunOfRbFifo d n with
 	[] -> Boolean.mk_true ctx
-	|t -> Boolean.mk_and ctx (List.map (fun f -> form2z3expr f) t)
+	|t -> Boolean.mk_and ctx (List.map (fun f -> form2z3expr ctx f) t)
 	
 
 let () = 
