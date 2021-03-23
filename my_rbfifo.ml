@@ -328,7 +328,7 @@ let models2 () =
 		Solver.check s extra_constraints; 
 		match Solver.get_model s with
 		Some m -> (
-					let res = List.map (fun e -> Model.eval t e true) (exprOfAssertions ctx) in
+					let res = List.map (fun e -> Model.eval m e true) (exprOfAssertions ctx) in
 					let rec print_list = function
 					[] -> ()
 					| e::l -> (
