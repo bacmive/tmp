@@ -218,6 +218,7 @@ let tagFunOfRbFifo (d : int) (n : node) : formula list =
 (** expression and formula To SMT's Expr *)
 
 open Z3
+open Z3.Solver
 open Z3.Boolean
 open Z3.Expr
 open Z3.Z3Array
@@ -281,11 +282,24 @@ let tag (ctx : Z3.context) (d : int) (n : node)  =
 	|t -> Boolean.mk_and ctx (List.map (fun f -> form2z3expr ctx f) t)
 	
 
+(** GSTE assertion graph and tag function concretization *)
+(** concretize/solve one edge -> check out against graph *)
+let solves () =
+	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	let slvr = Solver.mk_solver ctx None in
+	let assertions = [Boolean.mk_true; Boolean.mk_false] in
+	Solver.add slvr assertions;
+	match Solver.get_model slvr with
+	| Some m -> Printf.printf "%s\n" (Model.to_string m)
+	| None -> Printf.printf "no model"
+
 let () = 
 	let rec prt vls = 
-	match vls with
-	[] -> ()
-	| (Vertex i) :: t -> print_endline (string_of_int i);  prt t in
-	prt vectexL
+		match vls with
+		[] -> ()
+		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
+	in
+	prt vectexL;
+	solves ()
 
 	
