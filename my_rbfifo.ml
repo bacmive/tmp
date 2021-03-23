@@ -268,8 +268,19 @@ and form2z3expr (ctx:Z3.context) (f : formula)  =
 	| OrForm (f1, f2) -> Boolean.mk_or ctx [(form2z3expr ctx f1); (form2z3expr ctx f2)]
 	| ImplyForm (f1, f2) -> Boolean.mk_implies ctx (form2z3expr ctx f1) (form2z3expr ctx f2)
 	| Chaos -> Boolean.mk_true ctx
+	| Uip (str, expr) -> (
+							match expr with
+							e1::e2::[] -> BitVector.mk_ule ctx (expr2z3Expr e1) (expr2z3Expr e2)
+							| _ -> raise InvalidExpression
+						)
 	| _ -> raise InvalidExpression
-		
+
+(** GSTE assertion graph NODE to formula(tag function) *)
+let tag (ctx : Z3.context) (d : int) (n : node)  = 
+	match tagFunOfRbFifo d n with
+	[] -> Boolean.mk_true ctx
+	|t -> Boolean.mk_and ctx (List.map (fun f -> form2z3expr f) t)
+	
 
 let () = 
 	let rec prt vls = 
