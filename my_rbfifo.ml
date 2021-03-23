@@ -285,7 +285,7 @@ let tag (ctx : Z3.context) (d : int) (n : node)  =
 (** GSTE assertion graph and tag function concretization *)
 (** concretize/solve one edge -> check out against graph *)
 
-let assertions (ctx : Z3.Context) = 
+let assertions (ctx : Z3.context) = 
 	let zero : Expr.expr = Arithmetic.Integer.mk_numeral_i ctx 0 in
 	let three : Expr.expr = Arithmetic.Integer.mk_numeral_i ctx 3 in
 	let x : Expr.expr = Arithmetic.Integer.mk_const_s ctx "x" in
