@@ -366,9 +366,15 @@ let models3 () =
 											)
 										) (exprOfAssertions ctx) 
 			in
-			get_all_models c s new_constraints			
+			let one_model = List.map (fun e -> ( 
+												match Model.eval model e true with
+												| Some ee -> [(Expr.to_string e); (Expr.to_string ee)]
+												| None -> raise InvalidExpression
+											) (exprOfAssertions ctx)
+			in 
+			one_model::(get_all_models c s new_constraints)
 		)
-		| None -> ()
+		| None -> []
 	in
 	Solver.add slvr (assertions ctx);
 	get_all_models ctx slvr [] 	
@@ -398,7 +404,7 @@ let solves () =
 	| Some m -> Printf.printf "%s\n" (Model.to_string m)
 	| None -> Printf.printf "no model\n"
 
-
+(*
 let () = 	
 	let rec prt vls = 
 		match vls with
@@ -406,6 +412,11 @@ let () =
 		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
 	in
 	prt vectexL;
-	models3 ()
+*)
+let () =
+	let res = models3 () in
+	let printlist lis = List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string x)) lis in
+	List.iter (fun ll -> print_list ll) res 
+	
 
 	
