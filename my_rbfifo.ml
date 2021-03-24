@@ -349,7 +349,7 @@ let models2 () =
 let models3 () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
-	let get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
+	let rec get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
 		ignore (Solver.check s extra_constraints); 
 		match Solver.get_model s with
 		Some model -> (
