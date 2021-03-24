@@ -351,7 +351,8 @@ let models3 () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
 	let rec get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
-		ignore (Solver.check s extra_constraints); 
+		Solver.add s extra_constraints;
+		ignore (Solver.check s []); 
 		match Solver.get_model s with
 		Some model -> (
 			let new_constraints = List.map (fun e -> ( 
@@ -368,6 +369,7 @@ let models3 () =
 		)
 		| None -> ()
 	in
+	Solver.add slvr (assertions ctx);
 	get_all_models ctx slvr [] 	
 
 (**
@@ -403,6 +405,6 @@ let () =
 		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
 	in
 	prt vectexL;
-	models2 ()
+	models3 ()
 
 	
