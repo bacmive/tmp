@@ -343,6 +343,7 @@ let models2 () =
 				)
 		| None -> ()
 	in
+	Solver.add slvr (assertions ctx); 
 	get_all_models ctx slvr []
 
 
