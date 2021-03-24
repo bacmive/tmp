@@ -41,8 +41,9 @@ and formula =
 type formulaExpPair = formula * expression
 
 let rec caseExpression : formulaExpPair list -> expression = function
-  | [] -> Unknown
+  | (f, e)::[] -> IteForm (f, e, e)
   | (f, e)::t -> IteForm (f, e, (caseExpression t))
+  | _ -> raise (Failure "something went wrong")
 
 
 (* assignment *)
@@ -265,7 +266,6 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 							| _ -> raise UnMatchedUIF
 						)	
 	| IteForm (f, e1, e2) -> Boolean.mk_ite ctx (form2z3expr ctx f) ( expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
-	| Unknown -> 
 	| _ -> raise UnMatchedExpr
 and form2z3expr (ctx:Z3.context) (f : formula)  =
 	match f with 
