@@ -368,7 +368,7 @@ let models3 () =
 			in
 			let one_model = List.map (fun e -> ( 
 												match Model.eval model e true with
-												| Some ee -> [(Expr.to_string e); (Expr.to_string ee)]
+												| Some ee -> ((Expr.to_string e), (Expr.to_string ee))
 												| None -> raise InvalidExpression
 											) 
 									) (exprOfAssertions ctx)
@@ -416,8 +416,8 @@ let () =
 *)
 let () =
 	let res = models3 () in
-	let print_list lis = List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string x)) lis in
-	List.iter (fun ll -> print_list ll) res 
+	let print_list lt = List.iter (fun (x, y) -> Printf.printf "(%s, %s)\n" x y ) lt in
+	List.iter (fun lt -> print_list lt) res 
 	
 
 	
