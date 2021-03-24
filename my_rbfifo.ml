@@ -327,22 +327,64 @@ let models2 () =
 	let get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
 		ignore (Solver.check s extra_constraints); 
 		match Solver.get_model s with
-		Some m -> (
-					let res = List.map (fun e -> Model.eval m e true) (exprOfAssertions ctx) in
+		Some model -> (
+					let res = List.map (fun e -> Model.eval model e true) (exprOfAssertions c) in
 					let rec print_list = function
 					[] -> ()
-					| e::l -> (
-							match e with 
-							|Some ee -> Printf.printf "%s\n" (Expr.to_string ee); print_list l
+					| h::t -> (
+							match h with 
+							|Some hh -> Printf.printf "%s\n" (Expr.to_string hh); print_list t
 							|None -> Printf.printf "wrong\n"
 						)
 					in 
-					print_list res 
+					print_list res;
+					() (* TODO *)
+					
 				)
 		| None -> ()
 	in
-	get_all_models ctx slvr [] 
-		
+	get_all_models ctx slvr []
+
+
+let models3 () =
+	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	let slvr = Solver.mk_solver ctx None in
+	let get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
+		ignore (Solver.check s extra_constraints); 
+		match Solver.get_model s with
+		Some model -> (
+			let new_constraints = List.map (fun e -> ( 
+												match Model.eval model e true with
+												| Some ee -> (
+														let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
+														Boolean.mk_not ctx pre_model 
+													)
+												| None -> ()
+											)
+										) (exprOfAssertions ctx) 
+			in
+			get_all_models c s new_constraints			
+		)
+		| None -> ()
+	in
+	get_all_models ctx slvr [] 	
+
+(**
+let new_constraints = List.map (fun e -> ( 
+									match Model.eval model e true with
+									| Some ee -> (
+													let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
+													Boolean.mk_not ctx pre_model 
+												)
+									| None -> ()
+								)
+						) (exprOfAssertions ctx) 
+in
+get_all_models c s new_constraints
+*)
+
+
+
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
@@ -360,6 +402,6 @@ let () =
 		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
 	in
 	prt vectexL;
-	models2 ()
+	models3 ()
 
 	
