@@ -219,12 +219,13 @@ let tagFunOfRbFifo (d : int) (n : node) : formula list =
 (*********************************** rbFIFO GSTE SMT solve *******************************************)
 (** expression and formula To SMT's Expr *)
 
-open Z3
-open Z3.Solver
-open Z3.Boolean
-open Z3.Expr
-open Z3.Z3Array
-open Z3.Arithmetic
+module Solver = Z3.Solver
+module Boolean = Z3.Boolean
+module Expr =  Z3.Expr
+module Z3Array =  Z3.Z3Array
+module Arithmetic = Z3.Arithmetic
+module BitVector = Z3.BitVector
+module Model = Z3.Model
 open Printf
 
 exception InvalidExpression
@@ -410,44 +411,71 @@ let () =
 	let print_list lt = List.iter (fun (x, y) -> Printf.printf "(%s, %s) " x y ) lt in
 	List.iter (fun lt -> print_list lt; print_endline "" ) res 
 *)
+module ExprSet = Set.Make(
+	struct
+	let compare = Pervasives.compare
+	type t = Expr.expr
+	end
+)
+
 let () =
+	(*
 	let nodes = List.map (fun x -> (Vertex x)) ([0; 1]@(upt 3 (2*3+4))) in
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
 	List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string (tag ctx 1 x))) nodes
-	(*
-	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
-	let slvr = Solver.mk_solver ctx None in
-	let rec get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
-		Solver.add s extra_constraints;
-		ignore (Solver.check s []); 
-		match Solver.get_model s with
-		Some model -> (
-			let new_constraints = List.map (fun e -> ( 
-												match Model.eval model e true with
-												| Some ee -> (
-														let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
-														(* Printf.printf "(%s, %s)\n" (Expr.to_string e) (Expr.to_string ee); *)
-														Boolean.mk_not ctx pre_model 
-													)
-												| None -> raise InvalidExpression
-											)
-										) (exprOfAssertions ctx) 
-			in
-			let one_model = List.map (fun e -> ( 
-												match Model.eval model e true with
-												| Some ee -> ((Expr.to_string e), (Expr.to_string ee))
-												| None -> raise InvalidExpression
-											) 
-									) (exprOfAssertions ctx)
-			in 
-			one_model::(get_all_models c s new_constraints)
-		)
-		| None -> []
-	in
-	Solver.add slvr (assertions ctx);
-	get_all_models ctx slvr [] 	
+	TODO: find the to-be-watched expression
 	*)
-
+	let solve_trans () = 
+		let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+		let slvr = Solver.mk_solver ctx None in
+		(** get vars from an assertion *)
+		let get_vars (expr_list : Expr.expr list) = 
+			List.fold_right ExprSet.union (List.map 
+											(fun x -> List.fold_right ExprSet.add (Expr.get_args x) ExprSet.empty)
+											expr_list
+										) ExprSet.empty
+			|> ExprSet.elements
+		in 
+		let rec get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
+			Solver.add s extra_constraints;
+			ignore (Solver.check s []); 
+			List.iter (fun x -> Printf.printf "%s " (Expr.to_string x)) (Solver.get_assertions s);
+			Printf.printf "\n";
+			match Solver.get_model s with
+			Some model -> (
+				let new_constraints = List.map (fun e -> ( 
+													match Model.eval model e true with
+													| Some ee -> (
+															let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
+															(* Printf.printf "(%s, %s)\n" (Expr.to_string e) (Expr.to_string ee); *)
+															Boolean.mk_not ctx pre_model 
+														)
+													| None -> raise InvalidExpression
+												)
+											) (exprOfAssertions ctx) 
+				in
+				let one_model = List.map (fun e -> ( 
+													match Model.eval model e true with
+													| Some ee -> ((Expr.to_string e), (Expr.to_string ee))
+													| None -> raise InvalidExpression
+												) 
+										) (exprOfAssertions ctx)
+				in 
+				one_model::(get_all_models c s new_constraints)
+			)
+			| None -> []
+		in
+		Solver.add slvr (assertions ctx);
+		(** print the const *)
+		List.iter (fun x -> 
+						if Expr.is_const x then Printf.printf "%s " (Expr.to_string x)
+						else ()
+				) (get_vars (assertions ctx));
+		Printf.printf "\n";
+		get_all_models ctx slvr []
+	in 
+	let res = solve_trans () in
+	()
 
 	
