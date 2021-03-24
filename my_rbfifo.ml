@@ -405,8 +405,9 @@ let () =
 	List.iter (fun lt -> print_list lt; print_endline "" ) res 
 *)
 let () =
-	let nodes = [0; 1]@(upt 3 (2*3+4)) in
-	List.iter (fun x -> print_int x) nodes
+	let nodes = List.map (fun x -> Vertex x) [0; 1]@(upt 3 (2*3+4)) in
+	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string (tag ctx 1 x))) nodes
 	(*
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
