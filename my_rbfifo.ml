@@ -405,7 +405,7 @@ let () =
 	List.iter (fun lt -> print_list lt; print_endline "" ) res 
 *)
 let () =
-	let nodes = [0; 1]@[upt 3 (2*3+4)] in
+	let nodes = [0; 1]@(upt 3 (2*3+4)) in
 	List.iter (fun x -> print_int nodes) nodes
 	(*
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
