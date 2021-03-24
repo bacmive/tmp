@@ -359,7 +359,7 @@ let models3 () =
 														let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
 														Boolean.mk_not ctx pre_model 
 													)
-												| None -> ()
+												| None -> raise InvalidExpression
 											)
 										) (exprOfAssertions ctx) 
 			in
