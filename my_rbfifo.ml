@@ -370,7 +370,8 @@ let models3 () =
 												match Model.eval model e true with
 												| Some ee -> [(Expr.to_string e); (Expr.to_string ee)]
 												| None -> raise InvalidExpression
-											) (exprOfAssertions ctx)
+											) 
+									) (exprOfAssertions ctx)
 			in 
 			one_model::(get_all_models c s new_constraints)
 		)
