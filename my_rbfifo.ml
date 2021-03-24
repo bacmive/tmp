@@ -238,7 +238,7 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 	match e with 
 	IVar v -> (
 				match v with 
-				BoolV str -> Boolean.mk_const_s ctx "str"
+				BoolV str -> Boolean.mk_const_s ctx str
 				| DataV str -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx 1)
 				| IndexV str -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx 2)
 				| ArrayV str -> Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx 2) (BitVector.mk_sort ctx 1)
@@ -413,6 +413,7 @@ let () =
 let () =
 	let nodes = List.map (fun x -> (Vertex x)) ([0; 1]@(upt 3 (2*3+4))) in
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	let slvr = Solver.mk_solver ctx None in
 	List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string (tag ctx 1 x))) nodes
 	(*
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
