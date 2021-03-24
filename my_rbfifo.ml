@@ -380,21 +380,6 @@ let models3 () =
 	Solver.add slvr (assertions ctx);
 	get_all_models ctx slvr [] 	
 
-(**
-let new_constraints = List.map (fun e -> ( 
-									match Model.eval model e true with
-									| Some ee -> (
-													let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
-													Boolean.mk_not ctx pre_model 
-												)
-									| None -> ()
-								)
-						) (exprOfAssertions ctx) 
-in
-get_all_models c s new_constraints
-*)
-
-
 
 let solves () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
@@ -413,11 +398,47 @@ let () =
 		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
 	in
 	prt vectexL;
-*)
+
 let () =
 	let res = models3 () in
-	let print_list lt = List.iter (fun (x, y) -> Printf.printf "(%s, %s)  " x y ) lt in
+	let print_list lt = List.iter (fun (x, y) -> Printf.printf "(%s, %s) " x y ) lt in
 	List.iter (fun lt -> print_list lt; print_endline "" ) res 
-	
+*)
+let () =
+	let nodes = [0; 1]@[upt 3 (2*3+4)] in
+	List.iter (fun x -> print_int nodes) nodes
+	(*
+	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	let slvr = Solver.mk_solver ctx None in
+	let rec get_all_models (c : Z3.context) (s : Solver.solver) (extra_constraints : Expr.expr list) = 
+		Solver.add s extra_constraints;
+		ignore (Solver.check s []); 
+		match Solver.get_model s with
+		Some model -> (
+			let new_constraints = List.map (fun e -> ( 
+												match Model.eval model e true with
+												| Some ee -> (
+														let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
+														(* Printf.printf "(%s, %s)\n" (Expr.to_string e) (Expr.to_string ee); *)
+														Boolean.mk_not ctx pre_model 
+													)
+												| None -> raise InvalidExpression
+											)
+										) (exprOfAssertions ctx) 
+			in
+			let one_model = List.map (fun e -> ( 
+												match Model.eval model e true with
+												| Some ee -> ((Expr.to_string e), (Expr.to_string ee))
+												| None -> raise InvalidExpression
+											) 
+									) (exprOfAssertions ctx)
+			in 
+			one_model::(get_all_models c s new_constraints)
+		)
+		| None -> []
+	in
+	Solver.add slvr (assertions ctx);
+	get_all_models ctx slvr [] 	
+	*)
 
 	
