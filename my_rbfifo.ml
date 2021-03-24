@@ -416,7 +416,7 @@ let () =
 *)
 let () =
 	let res = models3 () in
-	let printlist lis = List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string x)) lis in
+	let print_list lis = List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string x)) lis in
 	List.iter (fun ll -> print_list ll) res 
 	
 
