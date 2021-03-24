@@ -359,6 +359,7 @@ let models3 () =
 												match Model.eval model e true with
 												| Some ee -> (
 														let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
+														Printf.printf "%s\n" (Expr.to_string pre_model);
 														Boolean.mk_not ctx pre_model 
 													)
 												| None -> raise InvalidExpression
