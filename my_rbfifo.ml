@@ -417,7 +417,7 @@ let () =
 let () =
 	let res = models3 () in
 	let print_list lt = List.iter (fun (x, y) -> Printf.printf "(%s, %s)\n" x y ) lt in
-	List.iter (fun lt -> print_list lt) res 
+	List.iter (fun lt -> print_list lt; print_endline "\n" ) res 
 	
 
 	
