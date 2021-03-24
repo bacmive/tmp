@@ -1,9 +1,10 @@
 (********************************* Types ********************************************)
 
+
 (** Constant Type*)
 type scalar = 
 	| DataC of int 
-	| IndexC of int
+	| IndexC of int (* int * int *)
 	| BoolC of bool
 	(*
 		| TopVal 
@@ -227,6 +228,10 @@ open Printf
 
 exception InvalidExpression
 exception UnfoundFunction
+exception UnMatchedExpr
+exception UnMatchedArrayV
+exception UnMatchedIndexC
+exception UnMatchedUIF
 
 let rec expr2z3Expr (ctx:Z3.context) (e : expression)  = 
 	match e with 
@@ -243,9 +248,9 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 															IndexC index -> Z3Array.mk_select ctx 
 																		(Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx 2) (BitVector.mk_sort ctx 1))
 																		(Expr.mk_numeral_int ctx index (BitVector.mk_sort ctx 2))
-															|_ -> raise InvalidExpression
+															|_ -> raise UnMatchedIndexC
 														)
-											|_ -> raise InvalidExpression					
+											|_ -> raise UnMatchedArrayV					
 										)
 			)
 	| Const s -> ( 
@@ -257,10 +262,11 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 	| Uif (str, expr)-> (
 							match expr with 
 							h1::h2::[] -> BitVector.mk_add ctx (expr2z3Expr ctx h1) (expr2z3Expr ctx h2)
-							| _ -> raise InvalidExpression
+							| _ -> raise UnMatchedUIF
 						)	
 	| IteForm (f, e1, e2) -> Boolean.mk_ite ctx (form2z3expr ctx f) ( expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
-	| _ -> raise InvalidExpression
+	| Unknown -> 
+	| _ -> raise UnMatchedExpr
 and form2z3expr (ctx:Z3.context) (f : formula)  =
 	match f with 
 	Eqn (e1, e2) -> Boolean.mk_eq ctx (expr2z3Expr ctx e1) (expr2z3Expr ctx e2)
@@ -405,7 +411,7 @@ let () =
 	List.iter (fun lt -> print_list lt; print_endline "" ) res 
 *)
 let () =
-	let nodes = List.map (fun x -> (Vertex x)) [0; 1]@(upt 3 (2*3+4)) in
+	let nodes = List.map (fun x -> (Vertex x)) ([0; 1]@(upt 3 (2*3+4))) in
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string (tag ctx 1 x))) nodes
 	(*
