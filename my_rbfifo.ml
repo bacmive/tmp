@@ -424,7 +424,7 @@ let () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let slvr = Solver.mk_solver ctx None in
 	List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string (tag ctx 1 x))) nodes
-	TODO: find the to-be-watched expression
+	TODO: tag formula checking
 	*)
 	let solve_trans () = 
 		let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
@@ -450,7 +450,7 @@ let () =
 															let pre_model = Boolean.mk_and ctx [(Arithmetic.mk_le ctx e ee); (Arithmetic.mk_ge ctx e ee)] in
 															(* Printf.printf "(%s, %s)\n" (Expr.to_string e) (Expr.to_string ee); *)
 															Boolean.mk_not ctx pre_model 
-														)
+														)	
 													| None -> raise InvalidExpression
 												)
 											) (exprOfAssertions ctx) 
