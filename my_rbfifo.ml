@@ -1,10 +1,11 @@
 (********************************* Types ********************************************)
 
+let index_size = 2
+let data_size = 1
 
 (** Constant Type*)
 type scalar = 
-	| DataC of int 
-	| IndexC of int (* int * int *)
+	| IntC of int * int
 	| BoolC of bool
 	(*
 		| TopVal 
@@ -14,8 +15,7 @@ type scalar =
 (** Variable Type*)
 type var = (* symbol *)
 	| BoolV of string 
-	| DataV  of string
-	| IndexV of string
+	| IntV of string * int
 	| ArrayV of string
 	| ParaV of var * scalar  
 	(* | Field of var * string *)
@@ -43,7 +43,7 @@ type formulaExpPair = formula * expression
 let rec caseExpression : formulaExpPair list -> expression = function
   | (f, e)::[] -> IteForm (f, e, e)
   | (f, e)::t -> IteForm (f, e, (caseExpression t))
-  | _ -> raise (Failure "something went wrong")
+  | _ -> raise (Failure "case expression broken")
 
 
 (* assignment *)
@@ -74,12 +74,17 @@ let rec upt (f : int) (t : int) : int list =
 	
 (** Array Manipulation with Expression and Statement*)
 let readArray (v : var) (bound : int) (e : expression) : expression =
-	caseExpression (List.map (fun index -> (Eqn (e, (Const (IndexC index))), IVar (ParaV (v, IndexC index)))) (down bound) )
+	caseExpression (List.map (fun index -> 
+							(Eqn (e, (Const (IntC (index, index_size)))), IVar (ParaV (v, IntC (index, index_size))))
+							) (down bound) 
+				)
 
 let writeArray (v : var) (bound : int) (addressE : expression) (ce : expression) : assign list =
 	List.map 
-        (fun i -> Assign((ParaV(v, IndexC i)), IteForm (Eqn (addressE, Const (IndexC i)), ce, (IVar (ParaV (v, IndexC i)))))) 
-        (down bound)
+        (fun i -> Assign((ParaV(v, IntC(i, index_size))), 
+						IteForm (Eqn (addressE, Const (IntC (i, index_size))), ce, (IVar (ParaV (v, IntC (i, index_size)))))
+					)
+	)(down bound)
 
 (*********************************** GSTE assertion graph *******************************************)
 type node = Vertex of int
@@ -107,13 +112,13 @@ let mem : var = ArrayV "mem"
 let rst : expression = IVar (BoolV "reset")
 let push : expression = IVar (BoolV "push")
 let pop : expression = IVar (BoolV "pop")
-let dataIn : expression = IVar (DataV "dataIn")
+let dataIn : expression = IVar (IntV ("dataIn", data_size))
 let low : expression = Const (BoolC false)
 let high : expression = Const (BoolC true)
 let empty : expression = IVar (BoolV "empty")
 let full : expression = IVar (BoolV "full")
-let tail : expression = IVar (IndexV "tail")
-let head : expression = IVar (IndexV "head")
+let tail : expression = IVar (IntV ("tail", index_size))
+let head : expression = IVar (IntV ("head", index_size))
 
 let fullFormula : formula = Eqn (full, high)
 let rstFormula : formula = Eqn (rst, high)
@@ -128,10 +133,10 @@ let dataOut : int -> expression = function
 	| depth -> readArray mem depth head
 
 let pushDataFormula : int -> formula = function 
-	| d -> AndForm (pushFormula, Eqn (dataIn, Const (DataC d)))
+	| d -> AndForm (pushFormula, Eqn (dataIn, Const (IntC (d, data_size))))
 
 let popDataFormula (d : int)  (depth : int) : formula = 
-	Eqn ((dataOut depth), Const (DataC d)) 
+	Eqn ((dataOut depth), Const (IntC (d, data_size))) 
 
 let last = 3
 let vectexI = Vertex 0
@@ -188,11 +193,11 @@ let rbFifoGsteSpec ( d : int ) : gsteSpec =
 (*********************************** rbFIFO GSTE tag function *******************************************)
 let rec applyPlusN (e : expression) (n : int) : expression = 
 	if n = 0 then e 
-	else Uif ("+", [applyPlusN e (n-1) ; Const (IndexC 1)])
+	else Uif ("+", [applyPlusN e (n-1) ; Const (IntC (1, index_size))])
 
 let tagFunOfRbFifo (d : int) (n : node) : formula list = 
-	let dataI = Const (DataC d) in 
-	let lastV = Const (IndexC last) in 
+	let dataI = Const (IntC (d, data_size)) in 
+	let lastV = Const (IntC (last, index_size)) in 
 	let x = nodeToInt n in
 	(
 		if (x=0) then []
@@ -239,17 +244,16 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 	match e with 
 	IVar v -> (
 				match v with 
-				BoolV str -> Boolean.mk_const_s ctx str
-				| DataV str -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx 1)
-				| IndexV str -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx 2)
+				| BoolV str -> Boolean.mk_const_s ctx str
+				| IntV (str, size) -> Expr.mk_const_s ctx str (BitVector.mk_sort ctx size)
 				| ArrayV str -> Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx 2) (BitVector.mk_sort ctx 1)
 				| ParaV (varr, sclr) -> (
 											match varr with 
 											ArrayV str -> (
 															match sclr with
-															IndexC index -> Z3Array.mk_select ctx 
-																		(Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx 2) (BitVector.mk_sort ctx 1))
-																		(Expr.mk_numeral_int ctx index (BitVector.mk_sort ctx 2))
+															IntC (index, size) -> Z3Array.mk_select ctx 
+																		(Z3Array.mk_const_s ctx str (BitVector.mk_sort ctx index_size) (BitVector.mk_sort ctx data_size))
+																		(Expr.mk_numeral_int ctx index (BitVector.mk_sort ctx size))
 															|_ -> raise UnMatchedIndexC
 														)
 											|_ -> raise UnMatchedArrayV					
@@ -257,8 +261,7 @@ let rec expr2z3Expr (ctx:Z3.context) (e : expression)  =
 			)
 	| Const s -> ( 
 				match s with 
-				DataC d ->  Expr.mk_numeral_int ctx d (BitVector.mk_sort ctx 1)
-				| IndexC i -> Expr.mk_numeral_int ctx i (BitVector.mk_sort ctx 2)
+				| IntC (value, size) ->  Expr.mk_numeral_int ctx value (BitVector.mk_sort ctx size)
 				| BoolC b -> if b then Boolean.mk_true ctx else Boolean.mk_false ctx
 			)
 	| Uif (str, expr)-> (
