@@ -406,7 +406,7 @@ let () =
 		match vls with
 		[] -> ()
 		| (Vertex i) :: t -> print_endline (string_of_int i);  prt t 
-	in
+	in15733182884
 	prt vectexL;
 
 let () =
@@ -421,14 +421,9 @@ module ExprSet = Set.Make(
 	end
 )
 
+
+(*
 let () =
-	(*
-	let nodes = List.map (fun x -> (Vertex x)) ([0; 1]@(upt 3 (2*3+4))) in
-	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
-	let slvr = Solver.mk_solver ctx None in
-	List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string (tag ctx 1 x))) nodes
-	TODO: tag formula checking
-	*)
 	let solve_trans () = 
 		let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 		let slvr = Solver.mk_solver ctx None in
@@ -480,5 +475,166 @@ let () =
 	in 
 	let res = solve_trans () in
 	()
+*)
 
+
+
+(*
+	let nodes = List.map (fun x -> (Vertex x)) ([0; 1]@(upt 3 (2*3+4))) in
+	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	let slvr = Solver.mk_solver ctx None in
+	List.iter (fun x -> Printf.printf "%s\n" (Expr.to_string (tag ctx 1 x))) nodes
 	
+	DONE: GET_VARs from Z3 Expr(or appointing)
+	TODO: Use the solution to translate the Term-Level AG to Boolean-Level AG
+*)
+let () =
+	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
+	let slvr = Solver.mk_solver ctx None in
+	let nodes = List.map (fun x -> (Vertex x)) ([0; 1]@(upt 3 (2*3+4))) in 
+	let asserts = List.map (fun i -> tag ctx 1 i) nodes in 
+	(** get vars from an assertion *)
+	let get_vars (expr_list : Expr.expr list) = 
+		List.fold_right ExprSet.union (List.map 
+										(fun x -> List.fold_right ExprSet.add (Expr.get_args x) ExprSet.empty)
+										expr_list
+									) ExprSet.empty
+		|> ExprSet.elements
+	in 
+	let rec get_all_models (c : Z3.context) (s : Solver.solver) (args : Expr.expr list) (extra_constraints : Expr.expr list) = 
+		Solver.add s extra_constraints;
+		ignore (Solver.check s []); 
+		(*
+		Printf.printf "args:\t";
+		List.iter (fun x -> Printf.printf "%s " (Expr.to_string x)) args;
+		Printf.printf "\n";
+		Printf.printf "assertion:\t";
+		List.iter (fun x -> Printf.printf "%s " (Expr.to_string x)) (Solver.get_assertions s);
+		Printf.printf "\n";
+		*)
+		match Solver.get_model s with
+		Some model -> (
+			let new_constraints = List.map (fun e -> 
+												match Model.eval model e true with
+												| Some ee -> (
+														let pre_model = Boolean.mk_and ctx [(BitVector.mk_ule ctx e ee); (BitVector.mk_uge ctx e ee)] in
+														(* Printf.printf "(%s, %s)\n" (Expr.to_string e) (Expr.to_string ee); *)
+														Boolean.mk_not ctx pre_model 
+													)	
+												| None -> raise InvalidExpression
+											) (List.filter (fun x -> Expr.is_const x) args) 
+			in
+			let one_model = List.map (fun e -> ( 
+												match Model.eval model e true with
+												| Some ee -> ((Expr.to_string e), (Expr.to_string ee))
+												| None -> raise InvalidExpression
+											) 
+									) args
+			in 
+			one_model::(get_all_models c s args new_constraints )
+		)
+		| None -> []
+	in
+	Printf.printf "number of asserts: %d\n" (List.length asserts);
+	List.iter (fun x -> if Boolean.is_true x  then ()
+						else (
+							Solver.push slvr;
+							Solver.add slvr [x];
+							let args_of_x = [expr2z3Expr ctx tail; expr2z3Expr ctx head] in 
+							let res = get_all_models ctx slvr args_of_x [] in
+							Printf.printf "For %s:\n" (Expr.to_string x); 
+							List.iter (fun aL -> ( List.iter (fun bT -> (let (var, value) = bT in Printf.printf "%s = %s  " var value) ) aL ;
+										Printf.printf "\n" )
+							) res;
+							Solver.pop slvr 1
+						)
+			) asserts
+			
+
+(*************************************** GSTE boolean-level assertion graph ********************************************)
+(* 
+	verilog's variable ==> ocaml's variable 
+	STE's formula based on verilog's varibale ==> ocaml's formula based its variable
+*)
+
+(** without tag invariants *)
+type boolvar = BoolVar of string
+type vecvar = VecVar of boolvar * int 
+
+
+(*verilog's variable ==> ocaml's variable *)
+let dataOfInput = List.map (fun i -> "dataIn"^ (string_of_int i)) (upt 0 (data_size-1))
+let dataOfOutput = List.map (fun i -> "dataOut"^ (string_of_int i)) (upt 0 (data_size-1))
+let varOfDataIn = List.map (fun s -> BoolVar s) dataOfInput
+let varOfDataOut =  List.map (fun s -> BoolVar s) dataOfOutput
+let clk0 = BoolVar "CLK0" 
+let rst0 = BoolVar "rst0"
+let push0 =  BoolVar "push0"
+let pop0 = BoolVar "pop0"
+let full0 = BoolVar "full0"
+let empty0 = BoolVar "empty0"
+
+
+type trajForm = 
+	| Is1 of boolvar
+	| Is0 of boolvar
+	| Next of trajForm
+	| Guard of trajForm * trajForm
+	| TAndList of trajForm list
+	| Chaos
+
+let isb (a : string) (b : boolvar ) =
+	TAndList [Guard(Is1 b, Is1 (BoolVar a)); Guard(Is0 b, Is0 (BoolVar a))]
+
+let bvAre (t1 : string list) (t2 : boolvar list) = 
+	TAndList (List.map (fun (a,b) -> isb a b) (List.combine t1 t2)) 
+
+
+(* *B, e.g. myclkB, for boolean level*)
+let myclkB = TAndList [Is0 clk0; Next (Is1 clk0)]                	 							(*时钟信号的模拟*)
+let rstB = TAndList [Is1 rst0; myclkB]                         									(*低电平时复位*)
+let pushB = TAndList [Is0 rst0; Is1 push0; Is0 pop0; myclkB]     								(*上升沿时push*)
+let popB = TAndList [Is0 rst0; Is0 push0; Is1 pop0; myclkB]       								(*上升沿时pop*)
+let nPushPopB = TAndList [Is0 rst0; Is0 push0; Is0 pop0; myclkB]								(*无操作*)
+let pushDataB d = TAndList [pushB; bvAre dataOfInput d; myclkB]            						(*push一个数据D*)
+let pushDataBi d i = TAndList [pushB; isb (List.nth dataOfInput i) (List.nth d i); myclkB]		(*push数据D的某一位*)
+let fullB = Is1 full0                                             								(*标志位的判断*)
+let nFullB = Is0 full0
+let emptyB = Is1 empty0
+let nEmptyB = Is0 empty0
+let popDataB d = bvAre dataOfOutput d                                    						(*判断pop*)
+let popDataBi d i = isb (List.nth dataOfOutput i) (List.nth d i)                        		(*判断pop数据的某一位*)
+
+let antOfRbFifo_bool (e : edge) : trajForm =
+	let f = nodeToInt (source e) in
+	let t = nodeToInt (sink e) in 
+	(	
+		if (f = 0) then rstB 
+		else if (f = t) then nPushPopB 
+		else if ((f mod 2)=1) then 
+		(	
+			if ((f + 2)=t) then pushB 
+			else if (f=(t+2)) then popB
+			else pushDataB varOfDataIn
+		)
+		else popB
+	)
+
+let consOfRbFifo_bool (e : edge) : trajForm =
+	let f = nodeToInt (source e) in
+	let t = nodeToInt (sink e) in
+	(
+		if ( (f mod 2) = 1 && (t mod 2) = 1 ) then 
+		(
+			if f = 1 then TAndList [emptyB; nFullB]
+			else if f = (2*last +3) then TAndList [nEmptyB; fullB]
+			else TAndList [nEmptyB; nFullB]
+		)
+		else if ( f = 4 && t = 1 ) then popDataB varOfDataIn
+		else if ( f = (2*last+4) ) then TAndList [nEmptyB; fullB]
+		else if ( f = 1 ) then TAndList [emptyB; nFullB]
+		else if ( f <> 0) then TAndList [nEmptyB; nFullB]
+		else Chaos
+	)
+	
+(** tag invariants *)
