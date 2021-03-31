@@ -58,3 +58,4 @@ module ExprSet :
     val find_last_opt : (elt -> bool) -> t -> elt option
     val of_list : elt list -> t
   end
+val get_all_models : Z3.context -> Z3.Expr.expr -> Expr.expr list -> unit

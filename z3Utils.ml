@@ -74,3 +74,37 @@ module ExprSet = Set.Make(
 	type t = Expr.expr
 	end
 )
+
+let get_all_models ctx expr args_of_expr =
+	let slvr = Solver.mk_solver ctx None in
+	let rec get (c : Z3.context) (s : Solver.solver) (args : Expr.expr list) (extra_constraints : Expr.expr list) = 
+		Solver.add s extra_constraints;
+		ignore (Solver.check s []); 
+		match Solver.get_model s with
+		Some model -> (
+			let new_constraints = List.map (fun e -> 
+												match Model.eval model e true with
+												| Some ee -> (
+														let pre_model = Boolean.mk_and c [(BitVector.mk_ule c e ee); (BitVector.mk_uge c e ee)] in
+														Boolean.mk_not c pre_model 
+													)	
+												| None -> raise InvalidExpression
+											) (List.filter (fun a -> Expr.is_const a) args) 
+			in
+			let one_model = List.map (fun a -> ( 
+												match Model.eval model a true with
+												| Some aa -> ((Expr.to_string a), (Expr.to_string aa))
+												| None -> raise InvalidExpression
+											) 
+									) args
+			in 
+			one_model::(get c s args new_constraints )
+		)
+		| None -> []
+	in 
+	Solver.add slvr [expr];
+	let res = get ctx slvr args_of_expr [] in
+	Printf.printf "For %s:\n" (Expr.to_string expr); 
+	List.iter (fun aL -> ( List.iter (fun bT -> (let (var, value) = bT in Printf.printf "%s = %s  " var value) ) aL ;
+				Printf.printf "\n" )
+	) res;

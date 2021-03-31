@@ -144,7 +144,6 @@ let tag (ctx : Z3.context) (d : int) (n : node)  =
 
 let () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
-	let slvr = Solver.mk_solver ctx None in
 	let nodes = List.map (fun x -> (Vertex x)) ([0; 1]@(upt 3 (2*3+4))) in 
 	let asserts = List.map (fun i -> tag ctx 1 i) nodes in 
 	(** get vars from an assertion 
@@ -155,44 +154,15 @@ let () =
 									) ExprSet.empty
 		|> ExprSet.elements
 	in *)
-	let rec get_all_models (c : Z3.context) (s : Solver.solver) (args : Expr.expr list) (extra_constraints : Expr.expr list) = 
-		Solver.add s extra_constraints;
-		ignore (Solver.check s []); 
-		match Solver.get_model s with
-		Some model -> (
-			let new_constraints = List.map (fun e -> 
-												match Model.eval model e true with
-												| Some ee -> (
-														let pre_model = Boolean.mk_and ctx [(BitVector.mk_ule ctx e ee); (BitVector.mk_uge ctx e ee)] in
-														(* Printf.printf "(%s, %s)\n" (Expr.to_string e) (Expr.to_string ee); *)
-														Boolean.mk_not ctx pre_model 
-													)	
-												| None -> raise InvalidExpression
-											) (List.filter (fun x -> Expr.is_const x) args) 
-			in
-			let one_model = List.map (fun e -> ( 
-												match Model.eval model e true with
-												| Some ee -> ((Expr.to_string e), (Expr.to_string ee))
-												| None -> raise InvalidExpression
-											) 
-									) args
-			in 
-			one_model::(get_all_models c s args new_constraints )
-		)
-		| None -> []
-	in
 	Printf.printf "number of asserts: %d\n" (List.length asserts);
 	List.iter (fun x -> if Boolean.is_true x  then ()
 						else (
-							Solver.push slvr;
-							Solver.add slvr [x];
 							let args_of_x = [expr2z3Expr ctx tail; expr2z3Expr ctx head] in 
-							let res = get_all_models ctx slvr args_of_x [] in
-							Printf.printf "For %s:\n" (Expr.to_string x); 
-							List.iter (fun aL -> ( List.iter (fun bT -> (let (var, value) = bT in Printf.printf "%s = %s  " var value) ) aL ;
-										Printf.printf "\n" )
-							) res;
-							Solver.pop slvr 1
+							get_all_models ctx x args_of_x
 						)
 			) asserts
+			
+
+
+	
 
