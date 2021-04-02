@@ -141,7 +141,7 @@ let tag (ctx : Z3.context) (d : int) (n : node)  =
 	|t -> Boolean.mk_and ctx (List.map (fun f -> form2z3expr ctx f) t)
 
 
-
+(** main function  *)
 let () =
 	let ctx = Z3.mk_context [("model", "true"); ("proof", "false")] in
 	let nodes = List.map (fun x -> (Vertex x)) ([0; 1]@(upt 3 (2*3+4))) in 
