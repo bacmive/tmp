@@ -1,10 +1,3 @@
-(** circuit model *)
-type circuit_node = 
-	| Input of string
-	| Latch of string 
-	| Output of string 
-	
-
 (** Constant Type*)
 type scalar = 
 	| IntC of int * int
@@ -61,14 +54,6 @@ let rec caseStatement : formulaStaPair list -> statement = function
   | [] -> skip
   | (f, gS)::t -> If (f, gS, (caseStatement t))
 
-(** auxiliary tools: down and upt*)
-let rec down : int -> int list = function 
-	| 0 -> [0]
-	| n -> (down (n-1))@[n]
-
-let rec upt (f : int) (t : int) : int list =
-	if f > t then []
-	else f :: upt (f+1) t
 
 (*********************************** GSTE assertion graph *******************************************)
 type node = Vertex of int

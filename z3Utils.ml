@@ -16,6 +16,15 @@ exception UnMatchedPara
 exception UnMatchedIndex
 exception UnMatchedUIF
 
+(** auxiliary tools: down and upt*)
+let rec down : int -> int list = function 
+	| 0 -> [0]
+	| n -> (down (n-1))@[n]
+
+let rec upt (f : int) (t : int) : int list =
+	if f > t then []
+	else f :: upt (f+1) t
+
 (** trajectory expression and formula To SMT's Expr *)
 let rec expr2z3Expr (ctx:Z3.context) (e : expression)  = 
 	match e with 	
