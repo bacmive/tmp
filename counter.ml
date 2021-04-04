@@ -27,7 +27,7 @@ let decToBin x =
     |0 -> lst
     |_ -> d2b (y/2) ((decToBin_helper (y mod 2))::lst)
   in
-  d2b x [];; 
+  d2b x [] 
 
 let intToBinVec value size =
   let res = Array.make size false in
