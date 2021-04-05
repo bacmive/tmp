@@ -25,9 +25,6 @@ lettype assertion = TImply trajForm trajForm //antecedent => consequent
 let DLEN = 2;
 let last = 3;
 
-let dout = map (\i. ("dout<"^(int2str i)^">0")) (0 upto (DLEN-1));
-let vOfDout = map (\str. bvariable str) dout;
-
 let myclk = TAndList [Is0 "CLK", Next (Is1 "CLK")]; 
 let rst = TAndList [Is1 "rst0", myclk]; 
 let nRst = TAndList [Is0 "rst0", myclk];
