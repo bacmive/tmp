@@ -1,0 +1,91 @@
+load "lib.fl";
+lettype trajForm = Is1 string
+                | Is0 string
+               	| Next trajForm
+                | Guard bexpr trajForm
+                | TAndList (trajForm list)
+        	    | Chaos
+;
+
+let Isb P str = TAndList [(Guard P (Is1 str)), (Guard (bNOT P) (Is0 str))]; //Isb value node
+
+lettype vertex = Vertex int;
+lettype edge = Edge vertex vertex;
+lettype edge2Form = Edge2Form (edge->trajForm);
+lettype graph = Graph (vertex list) vertex (edge list) edge2Form edge2Form;
+
+lettype assertion = TImply trajForm trajForm //antecedent => consequent
+			      | TGraph graph; //assertion graph
+			
+
+
+//-------------------------------------------------------------------------------//
+//let ckt = load_exe "counter.exe";
+//loadModel ckt;
+let DLEN = 2;
+let last = 3;
+
+let dout = map (\i. ("dout<"^(int2str i)^">0")) (0 upto (DLEN-1));
+let vOfDout = map (\str. bvariable str) dout;
+
+let myclk = TAndList [Is0 "CLK", Next (Is1 "CLK")]; 
+let rst = TAndList [Is1 "rst0", myclk]; 
+let nRst = TAndList [Is0 "rst0", myclk];
+
+let dout0 = TAndList [ Is0 "dout<1>0", Is0 "dout<0>0"];
+let dout1 = TAndList [ Is0 "dout<1>0", Is1 "dout<0>0"];
+let dout2 = TAndList [ Is1 "dout<1>0", Is0 "dout<0>0"];
+let dout3 = TAndList [ Is1 "dout<1>0", Is1 "dout<0>0"];
+
+//main assertion graph
+let vertexI = Vertex 0;
+let vertexL = vertexI : (map (\i. Vertex i)) (1 upto (last + 1));
+let edgeL = [Edge vertexI (Vertex 1)]
+			@ (map (\i. Edge (Vertex i) (Vertex (i+1))) (1 upto last))
+			@ [Edge (Vertex (last+1)) (Vertex 1)];
+
+
+let ant aEdge =
+	val (Edge (Vertex from) (Vertex to)) = aEdge
+	in
+	( (from = 0) AND (to = 1) ) => rst
+	| ( (from = 1) AND (to = 2) ) => nRst
+		| ( (from = 2) AND (to = 3) )  => nRst
+			| ( (from = 3) AND (to = 4) ) => nRst
+				| nRst
+;
+
+let cons aEdge = 
+	val (Edge (Vertex from) (Vertex to)) = aEdge
+	in
+	( (from = 0) AND (to = 1) ) => TAndList []
+	| ( (from = 1) AND (to = 2) ) => dout0
+		| ( (from = 2) AND (to = 3) )  => dout1
+			| ( (from = 3) AND (to = 4) ) => dout2
+				| dout3
+;
+
+// run STE 
+
+//turn the trajectory form to five tuple list accepted by STE
+letrec 	trajForm2FiveTuples (Is1 n) = [(T,n,T,0,1)]
+	/\ 	trajForm2FiveTuples (Is0 n) = [(T,n,F,0,1)]
+	/\ 	trajForm2FiveTuples (TAndList TLs) = flat (map trajForm2FiveTuples TLs)
+	/\ 	trajForm2FiveTuples (Next TF) = 
+			let tfs1 = trajForm2FiveTuples TF 
+			in
+			map (\tuple. val (g,n,v,s,e) = tuple in (g,n,v,s+1,e+1)) tfs1
+	/\ 	trajForm2FiveTuples (Guard P f) =
+    		let tfs1 = trajForm2FiveTuples f 
+			in	val ([g']) = bexpr2bdd [] [P] 
+			in	map  (\tuple. val (g,n,v,s,e) = tuple in ((g AND g'),n,v,s,e)) tfs1
+;
+
+// print FiveTuples
+// lettype five_tuples = 
+// let trajFiveTuple2Str FiveTuples =
+//     	itlist (\(When,Node,Value,From,To). \PrintString.
+//           	(sprintf "(%s,%s,%s,%d,%d) " ((bool2str 10 When),Node,(bool2str 10 Value),From,To)) ^ PrintString)
+//           FiveTuples ""
+// install_print_function trajFiveTuple2Str ;
+quit;

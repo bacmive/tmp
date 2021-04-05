@@ -1,21 +1,72 @@
-open Types
+open B_types
+open Tools
+
 let last = 3
 let data_size = 2
 
-let rec upt (f : int) (t : int) : int list =
-	if f > t then []
-	else f :: upt (f+1) t
+(********************************* gste assertion graph skeleton ******************************)
+let vectexI = Vertex 0
+let vectexL = vectexI::(List.map (fun i -> Vertex i) (upt 1 (last+1)))
 
-type boolvar = 
-	| BVar of string
-	| BVec of string * int
+let edgeL = 
+	let e1 = Edge (Vertex 0, Vertex 1) in
+	let e2_list = List.map (fun i -> Edge (Vertex i, Vertex (i+1))) (upt 1 last) in
+	let e3 = Edge (Vertex (last+1), Vertex 1) in
+	(e1::e2_list)@[e3]
+
+(********************************* gste assertion formulas ******************************)
+let reset = IVar (Ident ("reset", Bool))
+let dout = IVar (Ident ("dout", Int data_size))
+let low : expression = Const (BoolC false) 
+let high : expression = Const (BoolC true)
+
+let rstFormula = Eqn(reset, high)
+let noRstFormula = Neg rstFormula
+
+let antOfCounter e = 
+	let f = nodeToInt (source e) in
+	(
+		if(f == 0) then rstFormula
+		else noRstFormula
+	)
+
+let consOfCounter e = 
+	let f = nodeToInt (source e) in
+	(
+		if f == 0 then Chaos
+		else Eqn (dout, Const (IntC ((f-1), data_size)))
+	)
+
+let counterGsteSpec = Graph (vectexI , edgeL, antOfCounter, consOfCounter)
+
+let antOfCounter_bool e = 
+	termForm2bitForm (antOfCounter e)
+
+let consOfCounter_bool e =
+	termForm2bitForm (consOfCounter e)
+	
+let () = 
+	List.iter (
+				fun e -> (
+					let f = nodeToInt (source e) in
+					let t = nodeToInt (sink e) in
+					Printf.printf "Edge (%d, %d)'s boolean antecedent is: %s\n"  f t (print_form (antOfCounter_bool e));
+					Printf.printf "Edge (%d, %d)'s boolean consequent is: %s\n\n"  f t (print_form (consOfCounter_bool e))
+				)
+			) edgeL
+	
+
+
+
+
+
 
 (***************** tools to translate a integer to boolean vectors ********************)
 (**
 	e.g. 
 	translate 3 into 2-bit boolean vector:
 	[true; true]
-*)
+
 let decToBin_helper = function 
   | 1 -> true
   | 0 -> false
@@ -42,41 +93,4 @@ let intToBinVec value size =
   List.iter (fun (v, i) -> Array.set res (size-1-i) v) (List.combine bin indexes);
   Array.to_list res
 (*******************************************************)
-
-
-(********************************* gste assertion graph skeleton ******************************)
-let vectexI = Vertex 0
-let vectexL = vectexI::(List.map (fun i -> Vertex i) (upt 1 (last+1)))
-
-let edgeL = 
-	let e1 = Edge (Vertex 0, Vertex 1) in
-	let e2_list = List.map (fun i -> Edge (Vertex i, Vertex (i+1))) (upt 1 last) in
-	let e3 = Edge (Vertex (last+1), Vertex 1) in
-	(e1::e2_list)@[e3]
-
-(********************************* gste assertion formulas ******************************)
-let reset = IVar (Ident ("reset", Bool))
-let dout = IVar (Ident ("dout", Int data_size))
-let low : expression = Const (BoolC false) 
-let high : expression = Const (BoolC true)
-
-let rstFormula = Eqn(reset, high)
-let noRstFormula = Neg rstFormula
-
-let antOfCounter e = 
-	let f = nodeToInt (source e) in
-	let t = nodeToInt (sink e) in
-	(
-		if(f == 0) then rstFormula
-		else noRstFormula
-	)
-
-let consOfCounter e = 
-	let f = nodeToInt (source e) in
-	let t = nodeToInt (sink e) in
-	(
-		if f == 0 then Chaos
-		else Eqn (dout, (f-1))
-	)
-
-let  counterGsteSpec = Graph (vectexI , edgeL,  antOfCounter, consOfCounter)
+*)

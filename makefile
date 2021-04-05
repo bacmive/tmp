@@ -6,5 +6,11 @@
 OBJ= fifo.native
 all:
 	ocamlbuild -use-ocamlfind '${OBJ}'
+
+counter:
+	mv _tags jb
+	ocamlbuild 'counter.native'
+	mv jb _tags
+
 clean:
 	ocamlbuild -clean

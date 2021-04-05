@@ -4,7 +4,7 @@
 #'write_blif -c' options.
 .model counter
 .inputs rst0 
-.outputs dout<1>0 dout<0>0 
+.outputs dout<1>0 dout<0>0 # 1 -> 01 (dout<1>0和dout<0>0分别代表？)
 .latch _n10<1>0 dout<1>0 2
 .latch _n10<0>0 dout<0>0 2
 .names rst0 _n00 

@@ -1,5 +1,6 @@
 open Types
 open Z3Utils
+open Tools
 
 let index_size = 2
 let data_size = 2
