@@ -78,6 +78,21 @@ letrec 	trajForm2FiveTuples (Is1 n) = [(T,n,T,0,1)]
 			in	map  (\tuple. val (g,n,v,s,e) = tuple in ((g AND g'),n,v,s,e)) tfs1
 ;
 
+let steOnEdge e = 
+	let ant_e = ant e 
+	in	let cons_e = cons e
+	in  let ant_ste = trajForm2FiveTuples ant_e
+	in	let cons_ste = trajForm2FiveTuples cons_e
+	then 
+	(STE "-w -y -S" ckt [] ant_ste cons_ste) => []
+	| error "STE fails"
+;
+
+foreach [e |edgeL] . (steOnEdge e);
+	
+	
+
+
 // print FiveTuples
 // lettype five_tuples = 
 // let trajFiveTuple2Str FiveTuples =
