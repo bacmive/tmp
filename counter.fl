@@ -20,8 +20,7 @@ lettype assertion = TImply trajForm trajForm //antecedent => consequent
 
 
 //-------------------------------------------------------------------------------//
-//let ckt = load_exe "counter.exe";
-//loadModel ckt;
+let ckt = load_exe "counter.exe";
 let DLEN = 2;
 let last = 3;
 
@@ -84,11 +83,11 @@ let steOnEdge e =
 	in  let ant_ste = trajForm2FiveTuples ant_e
 	in	let cons_ste = trajForm2FiveTuples cons_e
 	then 
-	(STE "-w -y -S" ckt [] ant_ste cons_ste) => []
-	| error "STE fails"
+	(STE "-w -y -S" ckt [] ant_ste cons_ste [] ) => (print "success!")
+	| error "Sry, STE fails!"
 ;
 
-foreach [e |edgeL] . (steOnEdge e);
+foreach [e | edgeL] . (steOnEdge e);
 	
 	
 
