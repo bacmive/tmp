@@ -1,3 +1,5 @@
+(** 在ocaml中定义用于转化的变量、公式类型，对应于forte中的表达式 *)
+
 type bVar = Bvariable of string
 type bExpr = 
 	| EVar of bVar
@@ -15,14 +17,13 @@ type trajForm =
 	| TAndList of trajForm list
 	| TChaos
 
-
+(** 将trajectory formula 转换为字符串*)
 let rec bExpr2str be =
 	match be with
 	| EVar (Bvariable str) -> Printf.sprintf " %s(EVar) " str
 	| EAnd (be1, be2) -> Printf.sprintf " EAnd (%s, %s) " (bExpr2str be1) (bExpr2str be2)
 	| EOr (be1, be2) -> Printf.sprintf " EOr (%s, %s) " (bExpr2str be1) (bExpr2str be2)
 	| ENeg e -> Printf.sprintf " ENeg (%s) " (bExpr2str e)
-
 
 let rec trajForm2str f =
 	match f with

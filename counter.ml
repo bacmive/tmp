@@ -24,27 +24,29 @@ let high : expression = Const (BoolC true)
 let rstFormula = Eqn(reset, high)
 let noRstFormula =  Eqn(reset, low)
 
+(**定义assertion graph*)
 let antOfCounter e = 
 	let f = nodeToInt (source e) in
 	(
 		if(f == 0) then rstFormula
 		else noRstFormula
 	)
-
 let consOfCounter e = 
 	let f = nodeToInt (source e) in
 	(
 		if f == 0 then Chaos
 		else Eqn (dout, Const (IntC ((f-1), data_size)))
 	)
-
+(** AG *)
 let counterGsteSpec = Graph (vectexI , edgeL, antOfCounter, consOfCounter)
 
+
+(** 将Ocaml表示的term-level公式转换为ocaml表示的bit-level公式*)
 let antOfCounter_bool e = 
 	termForm2bitForm (antOfCounter e)
-
 let consOfCounter_bool e =
 	termForm2bitForm (consOfCounter e)
+	
 	
 let () =
 	List.iter (
