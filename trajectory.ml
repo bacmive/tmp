@@ -26,9 +26,9 @@ let rec bExpr2str be =
 
 let rec trajForm2str f =
 	match f with
-	| Is1 (Tnode str) -> Printf.sprintf " Is1 %s " str
-	| Is0 (Tnode str) -> Printf.sprintf " Is0 %s " str
+	| Is1 (Tnode str) -> Printf.sprintf " Is1 %s" str
+	| Is0 (Tnode str) -> Printf.sprintf " Is0 %s" str
 	| Next tf 		  -> Printf.sprintf " Next (%s)" (trajForm2str tf)
 	| Guard (be, tf)  -> Printf.sprintf " Guard (%s, %s)" (bExpr2str be) (trajForm2str tf)
-	| TAndList ts     -> List.fold_right (^) (List.map (fun t -> trajForm2str t) ts) ""
+	| TAndList ts     -> Printf.sprintf "TAndList [%s]" (List.fold_right (^) (List.map (fun t -> (trajForm2str t)^";") ts) "")
 	| TChaos 		  -> "TChaos"
