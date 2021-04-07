@@ -47,7 +47,6 @@ let consOfCounter_bool e =
 	termForm2bitForm (consOfCounter e)
 	
 let () =
-	(*
 	List.iter (
 				fun e -> (
 					let f = nodeToInt (source e) in
@@ -55,9 +54,7 @@ let () =
 					Printf.printf "Edge (%d, %d)'s boolean antecedent is: %s\n"  f t (print_form (antOfCounter_bool e));
 					Printf.printf "Edge (%d, %d)'s boolean consequent is: %s\n\n"  f t (print_form (consOfCounter_bool e))
 				)
-			) edgeL
-	
-	*)
+			) edgeL;
 	List.iter (
 				fun e -> (
 					let f = nodeToInt (source e) in
