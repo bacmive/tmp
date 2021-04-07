@@ -24,14 +24,11 @@ let rec bExpr2str be =
 	| ENeg e -> Printf.sprintf " ENeg (%s) " (bExpr2str e)
 
 
-let print_trajForm form  =
-	let rec trajForm2str f =
-		match f with
-		| Is1 (Tnode str) -> Printf.sprintf " Is1 %s " str
-		| Is0 (Tnode str) -> Printf.sprintf " Is0 %s " str
-		| Next tf 		  -> Printf.sprintf " Next (%s)" (trajForm2str tf)
-		| Guard (be, tf)  -> Printf.sprintf " Guard (%s, %s)" (bExpr2str be) (trajForm2str tf)
-		| TAndList ts     -> List.fold_right (^) (List.map (fun t -> trajForm2str t) ts) ""
-		| TChaos 		  -> "TChaos"
-	in
-	print_endline (trajForm2str form)
+let rec trajForm2str f =
+	match f with
+	| Is1 (Tnode str) -> Printf.sprintf " Is1 %s " str
+	| Is0 (Tnode str) -> Printf.sprintf " Is0 %s " str
+	| Next tf 		  -> Printf.sprintf " Next (%s)" (trajForm2str tf)
+	| Guard (be, tf)  -> Printf.sprintf " Guard (%s, %s)" (bExpr2str be) (trajForm2str tf)
+	| TAndList ts     -> List.fold_right (^) (List.map (fun t -> trajForm2str t) ts) ""
+	| TChaos 		  -> "TChaos"
