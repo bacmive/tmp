@@ -5,11 +5,6 @@
 .PHONY: all clean
 OBJ= fifo.native
 all:
-	mv _tags js
-	ocamlbuild 'counter.native'
-	mv js _tags
-
-fifo:
 	ocamlbuild -use-ocamlfind '${OBJ}'
 
 clean:

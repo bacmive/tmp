@@ -1,5 +1,6 @@
 open B_types
 open Tools
+open Trajectory
 
 let last = 3
 let data_size = 2
@@ -45,7 +46,8 @@ let antOfCounter_bool e =
 let consOfCounter_bool e =
 	termForm2bitForm (consOfCounter e)
 	
-let () = 
+let () =
+	(*
 	List.iter (
 				fun e -> (
 					let f = nodeToInt (source e) in
@@ -55,7 +57,15 @@ let () =
 				)
 			) edgeL
 	
-
+	*)
+	List.iter (
+				fun e -> (
+					let f = nodeToInt (source e) in
+					let t = nodeToInt (sink e) in
+					Printf.printf "Edge (%d, %d)'s boolean antecedent is: %s\n"  f t (print_trajForm (bitForm2trajForm (antOfCounter_bool e)));
+					Printf.printf "Edge (%d, %d)'s boolean consequent is: %s\n\n"  f t (print_trajForm (bitForm2trajForm (consOfCounter_bool e)))
+				)
+			) edgeL
 
 
 

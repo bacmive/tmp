@@ -1,35 +1,33 @@
 open Tools
-(** Constant Type*)
+open Trajectory
+
 type scalar = 
   | IntC of int * int
   | BoolC of bool
-
-(* variables' type*)  
+  | SymbIntC of string * int
+  | SymbBoolC of string
+      
 type sort = 
   | Int of int
   | Bool
-  | Array of int * sort (** index_size, data_type *)
-
+  | Array of int * sort
+             
 type var =
   | Ident of string * sort
   | Para of var * expression
-  | Field of var * string
 and expression =
   | IVar of var
   | Const of scalar
   | IteForm of formula * expression * expression
-  | Uif of string * expression list
-  | Top 
-  | Unknown
 and formula = 
   | Eqn of expression * expression
   | AndForm of formula * formula
   | Neg of formula
   | OrForm of formula * formula
   | ImplyForm of formula * formula
-  | Uip of string * expression list
   | Chaos
- 
+
+
 (** term level scalar to boolean vector of 0/1 *)
 let termScalar2bitVecConst (c : scalar) : scalar list =
   match c with
@@ -57,7 +55,9 @@ let termScalar2bitVecConst (c : scalar) : scalar list =
       intToBinVec i_value i_size
     )
     | BoolC b -> [(BoolC b)]
-
+	| _ -> raise (Failure "In termScalar2bitVecConst: WRONG USAGE: can't work on symbolic const data")
+	
+         
 (** mapping function*)
 let formatMapVIS ?axis1:(a1=(-1)) ?axis2:(a2=(-1)) (name : string) =
   if a1 < 0 then name ^ "0"
@@ -99,7 +99,6 @@ let rec termVar2bitVecVar (v : var) : var list =
 		)
 		| _ -> raise (Failure "Not Supported Expression")
 	)
-	|_ -> raise (Failure  "Not Supported Variable Type")
  
  
 (** 
@@ -118,7 +117,6 @@ let rec termExp2bitExp (e : expression) =
 			let b_e2 = termExp2bitExp e2 in
 			List.map2 (fun t1 t2 -> IteForm(b_f, t1, t2)) b_e1 b_e2
 		)	
-		| _ -> raise (Failure "not supported yet")
 and termForm2bitForm (f : formula) =
 	match f with 
 	| Eqn (e1, e2) -> (
@@ -147,8 +145,7 @@ and termForm2bitForm (f : formula) =
 		ImplyForm (e1_form, e2_form)
 	)
 	| Chaos -> Chaos
-	| _ -> raise (Failure "not supported yet")
-  
+
 
 (** tools for printing the variables, expression, formula *)
 let rec print_var v = 
@@ -163,7 +160,6 @@ let rec print_var v =
                    )
     )
   | Para (v1 , expression) -> print_var v1
-  | _ -> raise (Failure "sry not supported")
  
 let rec print_expr e =
   match e with
@@ -172,9 +168,10 @@ let rec print_expr e =
     match sclr with
     | IntC (value, size) -> Printf.sprintf "Const(%d, Int(%d)) " value size
     | BoolC b -> Printf.sprintf "Const(Bool(%B)) " b
+	| SymbIntC (name, size) ->Printf.sprintf "SymbIntC:(%s,%d)" name size
+	| SymbBoolC name -> Printf.sprintf "SymbBoolC:%s" name
   )
   | IteForm (f, e1, e2) -> "IteForm (" ^ ( print_form  f) ^ ", "^ (print_expr e1)^ ", "^(print_expr e2) ^ " )"
-  | _-> raise (Failure "sry, not supported")
 and print_form f = 
   match f with
   | Eqn (e1, e2) -> "Eqn ("^(print_expr e1) ^", "^ (print_expr e2)^" )"
@@ -183,7 +180,40 @@ and print_form f =
   | OrForm (f1, f2) -> "OrForm ("^(print_form f1) ^ ", " ^ (print_form f2) ^ " )"
   | ImplyForm (f1, f2) -> "ImplyForm (" ^ (print_form f1) ^", " ^ (print_form f2) ^ " )"
   | Chaos -> "Chaos "
-  | _ -> raise (Failure "sry not supported")
+
+
+let symbScalar2TrajVar cnst =
+	match cnst with
+	| SymbIntC (name, size) -> (
+		List.map (fun i -> Bvariable (formatMapVIS ~axis1:i name)) (dwt (size-1) 0)
+	)
+	| SymbBoolC name -> (
+		[Bvariable (formatMapVIS name)]
+	)
+	|_ -> raise (Failure "In boolScalar2TrajVar: unsupported type")
+
+
+
+(*
+	transform bitForm in ocaml to types accepted by forte 
+	tag function
+	
+*)
+let bitForm2trajForm form = 
+	let rec toIsList f = 
+		match f with
+		| Chaos -> []
+		| Eqn (IVar (Ident (name, Bool)), Const (BoolC b)) -> [(if b then Is1 (Tnode name) else Is0 (Tnode name))]
+		| AndForm (Eqn (IVar (Ident (name, Bool)), Const (BoolC b)), nestedForm ) -> (if b then Is1 (Tnode name) else Is0 (Tnode name)) :: (toIsList nestedForm)
+		| _ -> raise (Failure "In bitForm2trajForm: error ") 
+	in
+	let res = toIsList form in
+	match res with
+	|[] -> TChaos
+	|t::[] -> t
+	|ts -> TAndList ts
+	
+
 
 (*********************************** GSTE assertion graph *******************************************)
 type node = Vertex of int
@@ -203,49 +233,3 @@ let sink : edge -> node = function
 (** retrive the int of a node *)
 let nodeToInt : node -> int = function
   | Vertex n -> n
-
-
-
-
-
-(**
-let rec termVar2bitVecVar mapping (v : var) = 
- match v with
- | Ident (str, typ) -> (
-  match typ with
-  | Int size -> List.map (fun i -> Ident (mapping str i, Bool)) (upt 0 (size-1))
-  | Bool -> [v]
-  | Array (index_size, typ1) -> (
-   match typ1 with 
-   | Int data_size -> (
-    let first_dimension = List.map (fun i -> str ^ "<*" ^ (string_of_int i) ^ "*>") (upt 0 (index_size-1)) in
-    let append_second_dimension (str : string) (second_dimension_size : int) = List.map (fun i ->  Ident (str ^ "<" ^ (string_of_int i) ^ ">", Bool)) (upt 0 (second_dimension_size-1)) in
-    let twoDimension = List.map (fun s -> append_second_dimension s data_size) first_dimension in
-    List.flatten twoDimension
-   )
-   | Bool -> (
-    List.map (fun i -> Ident (str ^ (string_of_int i), Bool) ) (upt 0 (index_size -1))
-   )
-   | _ -> raise (Failure "Not Supported Nested Array Yet")
-
-let rec termExp2bitexp mapping e=
-  case e of 
-    |(Var v) -> 
-      case v of 
-        |simple v --> ...
-        |error
-    |IteForm(f,e1,e2) ->
-    let f'=termForm2bitForm mapping f in
-    let e1'= termExp2bitexp mapping e1 in 
-    let e2'= termExp2bitexp mapping e2 in 
-    List.map2 ~f:(fun a b -> iteForm f' a b) e1' e2'
-    |uif --> error
-
-and let rec termForm2bitForm mapping f=
-  case f of 
-  eqn(e1,e2)->
-    let es1=termExp2bitexp mapping e1 in
-    let es2=termExp2bitexp mapping e2 in
-    let fs=List.map2 ~f:(fun a b -> eqn(a,b)) es1 es2 in
-    List.fold ~f(fun a b->and(a,b)) fs true
-*)
