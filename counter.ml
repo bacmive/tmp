@@ -62,8 +62,8 @@ let () =
 				fun e -> (
 					let f = nodeToInt (source e) in
 					let t = nodeToInt (sink e) in
-					Printf.printf "Edge (%d, %d)'s boolean antecedent is: %s\n"  f t (print_trajForm (bitForm2trajForm (antOfCounter_bool e)));
-					Printf.printf "Edge (%d, %d)'s boolean consequent is: %s\n\n"  f t (print_trajForm (bitForm2trajForm (consOfCounter_bool e)))
+					Printf.printf "Edge (%d, %d)'s boolean antecedent is: %s\n"  f t (trajForm2str (bitForm2trajForm (antOfCounter_bool e)));
+					Printf.printf "Edge (%d, %d)'s boolean consequent is: %s\n\n"  f t (trajForm2str (bitForm2trajForm (consOfCounter_bool e)))
 				)
 			) edgeL
 
