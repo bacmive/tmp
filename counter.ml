@@ -21,7 +21,7 @@ let low : expression = Const (BoolC false)
 let high : expression = Const (BoolC true)
 
 let rstFormula = Eqn(reset, high)
-let noRstFormula = Neg rstFormula
+let noRstFormula =  Eqn(reset, low)
 
 let antOfCounter e = 
 	let f = nodeToInt (source e) in

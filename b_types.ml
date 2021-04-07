@@ -61,8 +61,8 @@ let termScalar2bitVecConst (c : scalar) : scalar list =
 (** mapping function*)
 let formatMapVIS ?axis1:(a1=(-1)) ?axis2:(a2=(-1)) (name : string) =
   if a1 < 0 then name ^ "0"
-  else if a2 < 0 then name ^ "<" ^ (string_of_int a1) ^ ">"
-  else name ^ "<*" ^ (string_of_int a1) ^ "*>" ^ "<" ^ (string_of_int a2) ^ ">"
+  else if a2 < 0 then name ^ "<" ^ (string_of_int a1) ^ ">0"
+  else name ^ "<*" ^ (string_of_int a1) ^ "*>" ^ "<" ^ (string_of_int a2) ^ ">0"
 
 (** term variables to boolean variables *)
 let rec termVar2bitVecVar (v : var) : var list = 
