@@ -71,6 +71,7 @@ let () =
 					Printf.printf "Edge (%d, %d)'s boolean consequent is: %s\n\n"  f t (bitForm2str (consOfCounter_bool e))
 				)
 			) edgeL;
+			print_endline "";
 	List.iter (
 				fun e -> (
 					let f = nodeToInt (source e) in
@@ -79,9 +80,11 @@ let () =
 					Printf.printf "Edge (%d, %d)'s boolean forte consequent is: %s\n\n"  f t (trajForm2str (bitForm2trajForm (consOfCounter_bool e)))
 				)
 			) edgeL;
+			print_endline "";
 	List.iter (
 				fun (Vertex i) -> Printf.printf "Node %d's boolean tag invariant is: %s\n" i (bitForm2str (tag_bool(Vertex i)))
 			) vertexL;
+			print_endline "";
 	List.iter (
 				fun (Vertex i) -> Printf.printf "Node %d's boolean forte tag invariant is: %s\n" i (trajForm2str (bitForm2trajForm (tag_bool(Vertex i))))
 			) vertexL;
