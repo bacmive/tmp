@@ -6,8 +6,8 @@ let last = 3
 let data_size = 2
 
 (********************************* gste assertion graph skeleton ******************************)
-let vectexI = Vertex 0
-let vectexL = vectexI::(List.map (fun i -> Vertex i) (upt 1 (last+1)))
+let vertexI = Vertex 0
+let vertexL = vertexI::(List.map (fun i -> Vertex i) (upt 1 (last+1)))
 
 let edgeL = 
 	let e1 = Edge (Vertex 0, Vertex 1) in
@@ -24,31 +24,45 @@ let high : expression = Const (BoolC true)
 let rstFormula = Eqn(reset, high)
 let noRstFormula =  Eqn(reset, low)
 
-(**定义assertion graph*)
 let antOfCounter e = 
 	let f = nodeToInt (source e) in
 	(
 		if(f == 0) then rstFormula
 		else noRstFormula
 	)
+
 let consOfCounter e = 
 	let f = nodeToInt (source e) in
 	(
 		if f == 0 then Chaos
 		else Eqn (dout, Const (IntC ((f-1), data_size)))
 	)
-(** AG *)
-let counterGsteSpec = Graph (vectexI , edgeL, antOfCounter, consOfCounter)
+
+let counterGsteSpec = Graph (vertexI , edgeL, antOfCounter, consOfCounter)
 
 
-(** 将Ocaml表示的term-level公式转换为ocaml表示的bit-level公式*)
+(********************************* gste tag invariant ******************************)
+let last_var = IVar (Ident ("last", Int 2))
+
+let tag (Vertex n) = 
+	if n = 0 then Chaos
+	else Eqn (last_var, Const( IntC ((n-1), data_size)))
+	
+
+
+(********************************* ocaml term-level AG to ocaml boolean-level AG ******************************)
 let antOfCounter_bool e = 
 	termForm2bitForm (antOfCounter e)
+
 let consOfCounter_bool e =
 	termForm2bitForm (consOfCounter e)
-	
-	
-let () =
+
+let tag_bool n =
+	termForm2bitForm (tag n)
+
+
+(************************************** transform ocaml AG to forte AG(defined in trajectory.ml) *****************************************)	
+let () = 
 	List.iter (
 				fun e -> (
 					let f = nodeToInt (source e) in
@@ -61,10 +75,14 @@ let () =
 				fun e -> (
 					let f = nodeToInt (source e) in
 					let t = nodeToInt (sink e) in
-					Printf.printf "Edge (%d, %d)'s boolean antecedent is: %s\n"  f t (trajForm2str (bitForm2trajForm (antOfCounter_bool e)));
-					Printf.printf "Edge (%d, %d)'s boolean consequent is: %s\n\n"  f t (trajForm2str (bitForm2trajForm (consOfCounter_bool e)))
+					Printf.printf "Edge (%d, %d)'s boolean forte antecedent is: %s\n"  f t (trajForm2str (bitForm2trajForm (antOfCounter_bool e)));
+					Printf.printf "Edge (%d, %d)'s boolean forte consequent is: %s\n\n"  f t (trajForm2str (bitForm2trajForm (consOfCounter_bool e)))
 				)
-			) edgeL
+			) edgeL;
+	List.iter (
+				fun (Vertex i) -> Printf.printf "Node %d's boolean tan invariant is: %s\n" i (print_form (tag_bool(Vertex i)))
+			) vertexL
+	
 
 
 
