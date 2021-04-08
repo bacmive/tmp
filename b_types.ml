@@ -148,7 +148,7 @@ and termForm2bitForm (f : formula) =
 
 
 (** tools for printing the variables, expression, formula *)
-let rec print_var v = 
+let rec bvar2str v = 
   match v with 
   | Ident (str , srt) -> (
       match srt with
@@ -159,11 +159,11 @@ let rec print_var v =
       | _ -> raise (Failure "not supported type"
                    )
     )
-  | Para (v1 , expression) -> print_var v1
+  | Para (v1 , expression) -> bvar2str v1
  
-let rec print_expr e =
+let rec bitExpr2str e =
   match e with
-  | IVar v -> print_var v
+  | IVar v -> bvar2str v
   | Const sclr -> (
     match sclr with
     | IntC (value, size) -> Printf.sprintf "Const(%d, Int(%d)) " value size
@@ -171,15 +171,16 @@ let rec print_expr e =
 	| SymbIntC (name, size) ->Printf.sprintf "SymbIntC:(%s,%d)" name size
 	| SymbBoolC name -> Printf.sprintf "SymbBoolC:%s" name
   )
-  | IteForm (f, e1, e2) -> "IteForm (" ^ ( print_form  f) ^ ", "^ (print_expr e1)^ ", "^(print_expr e2) ^ " )"
-and print_form f = 
+  | IteForm (f, e1, e2) -> "IteForm (" ^ ( bitForm2str  f) ^ ", "^ (bitExpr2str e1)^ ", "^(bitExpr2str e2) ^ " )"
+and bitForm2str f = 
   match f with
-  | Eqn (e1, e2) -> "Eqn ("^(print_expr e1) ^", "^ (print_expr e2)^" )"
-  | AndForm (f1, f2) -> "AndForm ("^(print_form f1)^", "^(print_form f2)^")"
-  | Neg f ->  "Neg ("^ (print_form f)^ " )"
-  | OrForm (f1, f2) -> "OrForm ("^(print_form f1) ^ ", " ^ (print_form f2) ^ " )"
-  | ImplyForm (f1, f2) -> "ImplyForm (" ^ (print_form f1) ^", " ^ (print_form f2) ^ " )"
+  | Eqn (e1, e2) -> "Eqn ("^(bitExpr2str e1) ^", "^ (bitExpr2str e2)^" )"
+  | AndForm (f1, f2) -> "AndForm ("^(bitForm2str f1)^", "^(bitForm2str f2)^")"
+  | Neg f ->  "Neg ("^ (bitForm2str f)^ " )"
+  | OrForm (f1, f2) -> "OrForm ("^(bitForm2str f1) ^ ", " ^ (bitForm2str f2) ^ " )"
+  | ImplyForm (f1, f2) -> "ImplyForm (" ^ (bitForm2str f1) ^", " ^ (bitForm2str f2) ^ " )"
   | Chaos -> "Chaos "
+
 
 
 let symbScalar2TrajVar cnst =
@@ -191,8 +192,6 @@ let symbScalar2TrajVar cnst =
 		[Bvariable (formatMapVIS name)]
 	)
 	|_ -> raise (Failure "In boolScalar2TrajVar: unsupported type")
-
-
 
 (*
 	transform bitForm in ocaml to types accepted by forte 
