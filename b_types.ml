@@ -232,3 +232,101 @@ let sink : edge -> node = function
 (** retrive the int of a node *)
 let nodeToInt : node -> int = function
   | Vertex n -> n
+ 
+ (*********************************** to forte input file *******************************************)
+
+(** gsteSpec to forte input AG *)
+let toFL gs =   
+	let main_assertion_graph init_node node_set edge_set =
+		match init_node with (Vertex inum) -> Printf.fprintf stdout "let vertexI = Vertex %d;\n" inum ;
+		Printf.fprintf stdout "%s" ("let vertexL = [" ^ (String.concat "," (List.map (fun (Vertex i) -> Printf.sprintf "Vertex %d" i) node_set)) ^ "];\n" );
+		Printf.fprintf stdout "%s" ("let edgeL = [" ^ (String.concat "," (List.map (fun (Edge ((Vertex f),(Vertex t))) -> Printf.sprintf "Edge (Vertex %d) (Vertex %d)" f t) edge_set)) ^ "];\n");
+	in
+	let ant_function init_node node_set edge_set ants =
+		let ants_traj e = 
+			let term_f = ants e in
+			let bit_f = termForm2bitForm term_f in
+			let traj_f = bitForm2trajForm bit_f in
+			let rec trans trajf = 
+				match trajf with 
+				| TChaos -> []
+				| Is1 (Tnode name) -> [Printf.sprintf "Is1 \"%s\"" name]
+				| Is0 (Tnode name) -> [Printf.sprintf "Is0 \"%s\"" name]
+				| TAndList ts ->  List.flatten (List.map (fun f -> trans f) ts)
+				| _ -> raise (Invalid_argument "this is for boolean level trajectory formula")
+			in 
+			let add_myclk fs =
+				match fs with 
+				| [] -> "TAndList []"
+				| s -> "TAndList ["^ (String.concat "," (s@[Printf.sprintf "Is0 \"%s\"" visCLKname ; Printf.sprintf "Next (Is1 \"%s\")" visCLKname])) ^"]"
+			in
+			add_myclk (trans traj_f)
+		in
+		Printf.fprintf stdout "%s" (
+"let ant aEdge = 
+	val (Edge Vertex from) (Vertex to)) = aEdge
+	in 
+"^		(
+			let items = List.map (fun e -> ( 
+											match e with 
+											|Edge ((Vertex f),(Vertex t)) -> Printf.sprintf "((from = %d) AND (to = %d)) => %s " f t (ants_traj e) 
+										)
+							) edge_set 
+			in 
+			let body = String.concat "\n\t| " items in
+			Printf.sprintf "\t%s\n;\n\n" body
+		)
+	)
+	in 
+	let cons_function init_node node_set edge_set cons =
+		let cons_traj e = 
+			let term_f = cons e in
+			let bit_f = termForm2bitForm term_f in
+			let traj_f = bitForm2trajForm bit_f in
+			let rec trans t = 
+				match t with 
+					| TChaos -> "TAndList []"
+					| Is1 (Tnode name) -> Printf.sprintf "Is1 \"%s\"" name
+					| Is0 (Tnode name) -> Printf.sprintf "Is0 \"%s\"" name
+					| TAndList ts -> ("[" ^ (String.concat "," (List.map (fun f -> trans f) ts)) ^ "]")
+					| _ -> raise (Invalid_argument "this is for boolean level trajectory formula")
+			in 
+			trans traj_f
+		in 
+		Printf.fprintf stdout "%s" (
+"let cons aEdge = 
+	val (Edge Vertex from) (Vertex to)) = aEdge
+	in 
+"^		(	
+			let items = List.map (fun e -> ( 
+											match e with 
+											|Edge ((Vertex f),(Vertex t)) -> Printf.sprintf "((from = %d) AND (to = %d)) => %s " f t (cons_traj e) 
+										)
+							) edge_set 
+			in 
+			let body = String.concat "\n\t| " items in
+			Printf.sprintf "\t%s\n;\n\n" body
+		)
+	)
+	in 
+	match gs with Graph (init_node , node_set, edge_set, ants, cons) -> (
+		Printf.fprintf stdout "%s" 
+"
+let ckt = load_exe \"counter.exe\";
+load \"gsteSymReduce.fl\";
+loadModel ckt;
+";
+		main_assertion_graph init_node node_set edge_set;
+		ant_function init_node node_set edge_set ants;
+		cons_function init_node node_set edge_set cons ;
+		Printf.fprintf stdout "%s" 
+"
+let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
+let binNodes = [];
+lemma \"lemmaTMain\" mainGoal;
+	by (gsteSymbSim binNodes);
+done 0;
+quit;
+"		
+	)
+	

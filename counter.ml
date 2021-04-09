@@ -62,7 +62,7 @@ let tag_bool n =
 
 
 (************************************** transform ocaml AG to forte AG(defined in trajectory.ml) *****************************************)	
-let () = 
+let print () = 
 	List.iter (
 				fun e -> (
 					let f = nodeToInt (source e) in
@@ -89,7 +89,8 @@ let () =
 				fun (Vertex i) -> Printf.printf "Node %d's boolean forte tag invariant is: %s\n" i (trajForm2str (bitForm2trajForm (tag_bool(Vertex i))))
 			) vertexL;
 	
-
+let ()=
+	toFL counterGsteSpec
 
 
 
