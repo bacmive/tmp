@@ -16,7 +16,7 @@ let edgeL =
 	(e1::e2_list)@[e3]
 
 (********************************* gste assertion formulas ******************************)
-let reset = IVar (Ident ("reset", Bool))
+let reset = IVar (Ident ("rst", Bool))
 let dout = IVar (Ident ("dout", Int data_size))
 let low : expression = Const (BoolC false) 
 let high : expression = Const (BoolC true)

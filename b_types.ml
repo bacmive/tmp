@@ -1,6 +1,8 @@
 open Tools
 open Trajectory
 
+let visCLKname = "CLK"
+ 
 type scalar = 
   | IntC of int * int
   | BoolC of bool
@@ -70,7 +72,7 @@ let rec termVar2bitVecVar (v : var) : var list =
 	| Ident (str, typ) -> (
 		match typ with
 		| Int size -> List.map (fun i -> Ident (formatMapVIS ~axis1:i str, Bool)) (dwt (size-1) 0 )
-		| Bool -> [v]
+		| Bool -> [Ident (formatMapVIS str, Bool)]
 		| Array (index_size, typ1) -> (
 			match typ1 with 
 			| Int data_size -> (
@@ -213,14 +215,13 @@ let bitForm2trajForm form =
 	|ts -> TAndList ts
 	
 
-
 (*********************************** GSTE assertion graph *******************************************)
 type node = Vertex of int
 type edge = Edge of node * node
 
 type edgeToFormula = edge -> formula
 (* gste Graph *)
-type gsteSpec = Graph of node * edge list * edgeToFormula * edgeToFormula
+type gsteSpec = Graph of node * node list * edge list * edgeToFormula * edgeToFormula
 
 (** the source node of an edge and the sink node of an edge*)
 let source : edge -> node = function
@@ -233,7 +234,7 @@ let sink : edge -> node = function
 let nodeToInt : node -> int = function
   | Vertex n -> n
  
- (*********************************** to forte input file *******************************************)
+(*********************************** to forte input file *******************************************)
 
 (** gsteSpec to forte input AG *)
 let toFL gs =   
@@ -264,7 +265,7 @@ let toFL gs =
 		in
 		Printf.fprintf stdout "%s" (
 "let ant aEdge = 
-	val (Edge Vertex from) (Vertex to)) = aEdge
+	val (Edge (Vertex from) (Vertex to)) = aEdge
 	in 
 "^		(
 			let items = List.map (fun e -> ( 
@@ -273,7 +274,8 @@ let toFL gs =
 										)
 							) edge_set 
 			in 
-			let body = String.concat "\n\t| " items in
+			let cases = String.concat "\n\t| " items in
+			let body = cases ^ "\n\t| error \"In cons: missing case\"" in
 			Printf.sprintf "\t%s\n;\n\n" body
 		)
 	)
@@ -285,17 +287,22 @@ let toFL gs =
 			let traj_f = bitForm2trajForm bit_f in
 			let rec trans t = 
 				match t with 
-					| TChaos -> "TAndList []"
-					| Is1 (Tnode name) -> Printf.sprintf "Is1 \"%s\"" name
-					| Is0 (Tnode name) -> Printf.sprintf "Is0 \"%s\"" name
-					| TAndList ts -> ("[" ^ (String.concat "," (List.map (fun f -> trans f) ts)) ^ "]")
+					| TChaos -> []
+					| Is1 (Tnode name) -> [Printf.sprintf "Is1 \"%s\"" name]
+					| Is0 (Tnode name) -> [Printf.sprintf "Is0 \"%s\"" name]
+					| TAndList ts -> List.flatten (List.map (fun f -> trans f) ts)
 					| _ -> raise (Invalid_argument "this is for boolean level trajectory formula")
 			in 
-			trans traj_f
+			let add_tandlist ts =
+				match ts with
+				| [] -> "TAndList []"
+				| s -> "TAndList ["^ (String.concat "," s) ^"]"
+			in
+			add_tandlist (trans traj_f)
 		in 
 		Printf.fprintf stdout "%s" (
 "let cons aEdge = 
-	val (Edge Vertex from) (Vertex to)) = aEdge
+	val (Edge (Vertex from) (Vertex to)) = aEdge
 	in 
 "^		(	
 			let items = List.map (fun e -> ( 
@@ -304,9 +311,10 @@ let toFL gs =
 										)
 							) edge_set 
 			in 
-			let body = String.concat "\n\t| " items in
+			let cases = String.concat "\n\t| " items in
+			let body = cases ^ "\n\t| error \"In cons: missing case\"" in
 			Printf.sprintf "\t%s\n;\n\n" body
-		)
+		) 
 	)
 	in 
 	match gs with Graph (init_node , node_set, edge_set, ants, cons) -> (
@@ -329,4 +337,3 @@ done 0;
 quit;
 "		
 	)
-	
