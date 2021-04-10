@@ -38,7 +38,7 @@ let consOfCounter e =
 		else Eqn (dout, Const (IntC ((f-1), data_size)))
 	)
 
-let counterGsteSpec = Graph (vertexI , edgeL, antOfCounter, consOfCounter)
+let counterGsteSpec = Graph (vertexI , vertexL,  edgeL, antOfCounter, consOfCounter)
 
 
 (********************************* gste tag invariant ******************************)
@@ -62,7 +62,7 @@ let tag_bool n =
 
 
 (************************************** transform ocaml AG to forte AG(defined in trajectory.ml) *****************************************)	
-let print () = 
+let pprint () = 
 	List.iter (
 				fun e -> (
 					let f = nodeToInt (source e) in
@@ -87,9 +87,10 @@ let print () =
 			print_endline "";
 	List.iter (
 				fun (Vertex i) -> Printf.printf "Node %d's boolean forte tag invariant is: %s\n" i (trajForm2str (bitForm2trajForm (tag_bool(Vertex i))))
-			) vertexL;
-	
-let ()=
+			) vertexL
+
+(** transform gsteSpec to forte file *)
+let () = 
 	toFL counterGsteSpec
 
 
