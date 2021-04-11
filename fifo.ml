@@ -43,12 +43,12 @@ let noFullFormula = Eqn (full, low)
 let emptyFormula = Eqn (empty, high)
 let noEmptyFormula = Eqn (empty, low)
 
-let pushData data = ()
-let popData data = ()
+let pushData data = AndForm (pushFormula, Eqn (dataIn, data))
+let popData data = Eqn (dataOut, data)
     
 let antOfRbFIFO aEdge = 
-  let f = nodeToInt (source e) in
-  let t = nodeToInt (sink e)   in
+  let f = nodeToInt (source aEdge) in
+  let t = nodeToInt (sink aEdge)   in
   (
     if( f == 0) then rstFormula
     else (
@@ -56,21 +56,21 @@ let antOfRbFIFO aEdge =
 			if (f = t) then noPopPushFormula
 			else if ((f + 2) == t) then pushFormula
 			else if ( f == (t+2)) then popFormula
-			else pushData vOfDataIn
+			else pushData symbolDataIn
 		)else popFormula
 	)
   )
 
 let consOfRbFIFO aEdge = 
-	let f = nodeToInt (source e) in
-	let t = nodeToInt (sink e)   in
+	let f = nodeToInt (source aEdge) in
+	let t = nodeToInt (sink aEdge)   in
 	(
 		if ((f mod 2 == 1)&&(t mod 2 == 1)) then (
 			if (f == 1) then AndForm (emptyFormula, noFullFormula)
 			else if (f == (2*depth+1)) then AndForm (noEmptyFormula, fullFormula)
 			else AndForm (noEmptyFormula, noFullFormula)
 		)else (
-			if (t == 2)  then popData vOfDataIn
+			if (t == 2)  then popData symbolDataIn
 			else Chaos
 		)  
 	)
@@ -78,4 +78,4 @@ let consOfRbFIFO aEdge =
 let rbfifoGsteSpec = Graph (vertexI, vertexL, edgeL, antOfRbFIFO, consOfRbFIFO)
 
 let () =
-  List.iter (fun (Vertex i) -> print_int i) vertexL
+   toFL rbfifoGsteSpec
