@@ -1,7 +1,7 @@
-//dual port ram
-module dp_ram (clk, 
-			   wea, rea, addra, dina, douta
-			   web, reb, addrb, dinb, doutb );
+module dp_ram (clka, clkb, 
+			   wea, rea, addra, dina,
+			   web, reb, addrb, dinb, 
+			   douta, doutb );
 	parameter DATA_WIDTH = 2;
 	parameter ADDR_WIDTH = 2;
 	parameter RAM_DEPTH = 1 << ADDR_WIDTH;
@@ -16,25 +16,20 @@ module dp_ram (clk,
 	
 	reg [DATA_WIDTH-1:0] douta;
 	reg [DATA_WIDTH-1:0] doutb;
-	reg [DATA_WIDTH] mem [0:RAM_DEPTH-1];
+	reg [DATA_WIDTH-1:0] mem [0:RAM_DEPTH-1];
 	
-	always @(posedge clk)begin
+	always @(posedge clka)begin
         if(!wea)begin
 			mem[addra] = dina;
-			douta = dina;
 		end 
-		else begin
-			douta = mem[addra];    
-		end
+		douta = (rea) ? mem[addra] : douta;
 	end
 	 ​
-	always @(posedge clk)begin
+	always @(posedge clkb)begin
 		if(!web)begin
 			mem[addrb] = dinb;
-			doutb = dinb;
 		end
-		else begin
-			doutb = mem[addrb];
-		end
+		doutb = (reb) ? mem[addrb] : doutb;
 	 end
+
 endmodule
