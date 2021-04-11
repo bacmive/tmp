@@ -21,7 +21,7 @@ module dp_ram (clka, clkb,
 	always @(posedge clka)begin
         if(!wea)begin
 			mem[addra] = dina;
-		end 
+		end
 		douta = (rea) ? mem[addra] : douta;
 	end
 	 ​
@@ -30,6 +30,6 @@ module dp_ram (clka, clkb,
 			mem[addrb] = dinb;
 		end
 		doutb = (reb) ? mem[addrb] : doutb;
-	 end
+	end
 
 endmodule
