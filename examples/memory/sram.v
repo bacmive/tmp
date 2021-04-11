@@ -1,4 +1,8 @@
 module sram(clk, addr, we, dataIn, dataOut);
+	parameter DATA_WIDTH = 2;
+	parameter ADDR_WIDTH = 2;
+	parameter RAM_DEPTH = 1 << ADDR_WIDTH;
+	
 	input clk,we;
 	input [1:0] addr;
 	input [1:0] dataIn;
