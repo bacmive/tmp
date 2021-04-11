@@ -1,0 +1,135 @@
+# This blif file and the encoding file that was written out with it cannot
+# currently be read back into VIS. If you would like to read the blif and
+# encoding files back into VIS, then use the 'write_blif -l' or
+#'write_blif -c' options.
+.model memory
+.inputs wr0 addr<0>0 addr<1>0 din<0>0 din<1>0 
+.outputs dout<1>0 dout<0>0 
+.latch _n27<*3*><0>0 mem<*3*><0>0 2
+.latch _n25<1>0 dout<1>0 2
+.latch _n27<*1*><0>0 mem<*1*><0>0 2
+.latch _n27<*0*><1>0 mem<*0*><1>0 2
+.latch _n27<*2*><1>0 mem<*2*><1>0 2
+.latch _n27<*3*><1>0 mem<*3*><1>0 2
+.latch _n27<*0*><0>0 mem<*0*><0>0 2
+.latch _n25<0>0 dout<0>0 2
+.latch _n27<*2*><0>0 mem<*2*><0>0 2
+.latch _n27<*1*><1>0 mem<*1*><1>0 2
+.names wr0 _n00 
+1 1
+.names addr<0>0 addr<1>0 _n40 
+00 1
+.names _n40 _n2<0>0 mem<*0*><0>0 mem$wr_n1$true<*0*><0>0 
+11- 1
+0-1 1
+.names _n40 _n2<1>0 mem<*0*><1>0 mem$wr_n1$true<*0*><1>0 
+11- 1
+0-1 1
+.names addr<0>0 addr<1>0 _n80 
+10 1
+.names _n80 _n2<0>0 mem<*1*><0>0 mem$wr_n1$true<*1*><0>0 
+11- 1
+0-1 1
+.names _n80 _n2<1>0 mem<*1*><1>0 mem$wr_n1$true<*1*><1>0 
+11- 1
+0-1 1
+.names addr<0>0 addr<1>0 _nc0 
+01 1
+.names _nc0 _n2<0>0 mem<*2*><0>0 mem$wr_n1$true<*2*><0>0 
+11- 1
+0-1 1
+.names _nc0 _n2<1>0 mem<*2*><1>0 mem$wr_n1$true<*2*><1>0 
+11- 1
+0-1 1
+.names addr<0>0 addr<1>0 _n100 
+11 1
+.names _n100 _n2<0>0 mem<*3*><0>0 mem$wr_n1$true<*3*><0>0 
+11- 1
+0-1 1
+.names _n100 _n2<1>0 mem<*3*><1>0 mem$wr_n1$true<*3*><1>0 
+11- 1
+0-1 1
+.names din<0>0 _n2<0>0 
+1 1
+.names din<1>0 _n2<1>0 
+1 1
+.names wr0 mem$wr_n1$true<*0*><0>0 mem<*0*><0>0 mem$wr$raw_n15<*0*><0>0 
+11- 1
+0-1 1
+.names wr0 mem$wr_n1$true<*0*><1>0 mem<*0*><1>0 mem$wr$raw_n15<*0*><1>0 
+11- 1
+0-1 1
+.names wr0 mem$wr_n1$true<*1*><0>0 mem<*1*><0>0 mem$wr$raw_n15<*1*><0>0 
+11- 1
+0-1 1
+.names wr0 mem$wr_n1$true<*1*><1>0 mem<*1*><1>0 mem$wr$raw_n15<*1*><1>0 
+11- 1
+0-1 1
+.names wr0 mem$wr_n1$true<*2*><0>0 mem<*2*><0>0 mem$wr$raw_n15<*2*><0>0 
+11- 1
+0-1 1
+.names wr0 mem$wr_n1$true<*2*><1>0 mem<*2*><1>0 mem$wr$raw_n15<*2*><1>0 
+11- 1
+0-1 1
+.names wr0 mem$wr_n1$true<*3*><0>0 mem<*3*><0>0 mem$wr$raw_n15<*3*><0>0 
+11- 1
+0-1 1
+.names wr0 mem$wr_n1$true<*3*><1>0 mem<*3*><1>0 mem$wr$raw_n15<*3*><1>0 
+11- 1
+0-1 1
+.names wr0 _n1f0 
+0 1
+.names addr<1>0 addr<0>0 mem$wr$raw_n15<*0*><0>0 mem$wr$raw_n15<*1*><0>0 mem$wr$raw_n15<*2*><0>0 mem$wr$raw_n15<*3*><0>0 _n20<0>0 
+001--- 1
+01-1-- 1
+10--1- 1
+11---1 1
+.names addr<1>0 addr<0>0 mem$wr$raw_n15<*0*><1>0 mem$wr$raw_n15<*1*><1>0 mem$wr$raw_n15<*2*><1>0 mem$wr$raw_n15<*3*><1>0 _n20<1>0 
+001--- 1
+01-1-- 1
+10--1- 1
+11---1 1
+.names _n1f0 _n20<0>0 dout<0>0 _n21<0>0 
+11- 1
+0-1 1
+.names _n1f0 _n20<1>0 dout<1>0 _n21<1>0 
+11- 1
+0-1 1
+.names _n21<0>0 dout$raw_n1e<0>0 
+1 1
+.names _n21<1>0 dout$raw_n1e<1>0 
+1 1
+.names _n240
+1
+.names _n240 dout$raw_n1e<0>0 dout$raw_n1e<1>0 _n25<0>0 
+11- 1
+.names _n240 dout$raw_n1e<0>0 dout$raw_n1e<1>0 _n25<1>0 
+1-1 1
+.names _n00 _n260 
+1 1
+.names _n260 mem$wr$raw_n15<*0*><0>0 mem$wr$raw_n15<*0*><1>0 mem<*0*><0>0 mem<*0*><1>0 _n27<*0*><0>0 
+11--- 1
+0--1- 1
+.names _n260 mem$wr$raw_n15<*0*><0>0 mem$wr$raw_n15<*0*><1>0 mem<*0*><0>0 mem<*0*><1>0 _n27<*0*><1>0 
+1-1-- 1
+0---1 1
+.names _n260 mem$wr$raw_n15<*1*><0>0 mem$wr$raw_n15<*1*><1>0 mem<*1*><0>0 mem<*1*><1>0 _n27<*1*><0>0 
+11--- 1
+0--1- 1
+.names _n260 mem$wr$raw_n15<*1*><0>0 mem$wr$raw_n15<*1*><1>0 mem<*1*><0>0 mem<*1*><1>0 _n27<*1*><1>0 
+1-1-- 1
+0---1 1
+.names _n260 mem$wr$raw_n15<*2*><0>0 mem$wr$raw_n15<*2*><1>0 mem<*2*><0>0 mem<*2*><1>0 _n27<*2*><0>0 
+11--- 1
+0--1- 1
+.names _n260 mem$wr$raw_n15<*2*><0>0 mem$wr$raw_n15<*2*><1>0 mem<*2*><0>0 mem<*2*><1>0 _n27<*2*><1>0 
+1-1-- 1
+0---1 1
+.names _n260 mem$wr$raw_n15<*3*><0>0 mem$wr$raw_n15<*3*><1>0 mem<*3*><0>0 mem<*3*><1>0 _n27<*3*><0>0 
+11--- 1
+0--1- 1
+.names _n260 mem$wr$raw_n15<*3*><0>0 mem$wr$raw_n15<*3*><1>0 mem<*3*><0>0 mem<*3*><1>0 _n27<*3*><1>0 
+1-1-- 1
+0---1 1
+.exdc
+.end
