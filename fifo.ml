@@ -4,10 +4,10 @@ open Tools
 (* ring buffer *)
 
 (** constant definition *)
-let depth = 16
+let depth = 4
 let last = depth - 1
-let data_length = 4
-let index_length = 4
+let data_length = 2
+let index_length = 2
 
 (** main assertion graph *)
 let vertexI = Vertex 0
@@ -77,13 +77,16 @@ let consOfRbFIFO aEdge =
   
 let rbfifoGsteSpec = Graph (vertexI, vertexL, edgeL, antOfRbFIFO, consOfRbFIFO)
 
-let () =
-    let bit_f = termForm2bitForm pushFormula in
+let print_single_traj_f () =
+    let bit_f = termForm2bitForm (pushData symbolDataIn) in
 	let traj_f = bitForm2trajForm bit_f in
 	print_endline (trajForm2str traj_f)
 (*
 Output:
-TAndList [ Is0 rst0; Is1 push0; Is0 pop0;TAndList [ Guard ( din<3>0(EVar) ,  Is1 dataIn<3>0); Guard ( din<3>0(EVar) ,  Is0 dataIn<3>0);];TAndList [ Guard ( din<2>0(EVar) ,  Is1 dataIn<2>0); Guard ( din<2>0(EVar) ,  Is0 dataIn<2>0);];TAndList [ Guard ( din<1>0(EVar) ,  Is1 dataIn<1>0); Guard ( din<1>0(EVar) ,  Is0 dataIn<1>0);];TAndList [ Guard ( din<0>0(EVar) ,  Is1 dataIn<0>0); Guard ( din<0>0(EVar) ,  Is0 dataIn<0>0);];]
+TAndList [ Is0 rst0; Is1 push0; Is0 pop0; TAndList [ Guard ( din<3>0(EVar) , Is1 dataIn<3>0); Guard ( din<3>0(EVar) , Is0 dataIn<3>0)]; TAndList [ Guard ( din<2>0(EVar) , Is1 dataIn<2>0); Guard ( din<2>0(EVar) , Is0 dataIn<2>0)]; TAndList [ Guard ( din<1>0(EVar) , Is1 dataIn<1>0); Guard ( din<1>0(EVar) , Is0 dataIn<1>0)]; TAndList [ Guard ( din<0>0(EVar) , Is1 dataIn<0>0); Guard ( din<0>0(EVar) , Is0 dataIn<0>0)]]
 *)	
+
+let () =
+	toFL rbfifoGsteSpec "rbfifo"
 
 	

@@ -29,7 +29,12 @@ and formula =
   | ImplyForm of formula * formula
   | Chaos
 
-
+(** mapping function*)
+let formatMapVIS ?axis1:(a1=(-1)) ?axis2:(a2=(-1)) (name : string) =
+  if a1 < 0 then name ^ "0"
+  else if a2 < 0 then name ^ "<" ^ (string_of_int a1) ^ ">0"
+  else name ^ "<*" ^ (string_of_int a1) ^ "*>" ^ "<" ^ (string_of_int a2) ^ ">0"
+  
 (** term level scalar to boolean vector of 0/1 *)
 let termScalar2bitVecConst (c : scalar) : scalar list =
   match c with
@@ -57,14 +62,12 @@ let termScalar2bitVecConst (c : scalar) : scalar list =
       intToBinVec i_value i_size
     )
     | BoolC b -> [(BoolC b)]
-	| _ -> raise (Failure "In termScalar2bitVecConst: WRONG USAGE: can't work on symbolic const data")
+	| SymbIntC (name, i_size) -> (
+		List.map (fun i -> SymbBoolC (formatMapVIS ~axis1:i name)) (dwt (i_size-1) 0)
+	)
+	| SymbBoolC name -> [(SymbBoolC (formatMapVIS name))]
+	(*| _ -> raise (Failure "In termScalar2bitVecConst: WRONG USAGE: can't work on symbolic const data")*)
 	
-         
-(** mapping function*)
-let formatMapVIS ?axis1:(a1=(-1)) ?axis2:(a2=(-1)) (name : string) =
-  if a1 < 0 then name ^ "0"
-  else if a2 < 0 then name ^ "<" ^ (string_of_int a1) ^ ">0"
-  else name ^ "<*" ^ (string_of_int a1) ^ "*>" ^ "<" ^ (string_of_int a2) ^ ">0"
 
 (** term variables to boolean variables *)
 let rec termVar2bitVecVar (v : var) : var list = 
@@ -205,7 +208,9 @@ let bitForm2trajForm form =
 		match f with
 		| Chaos -> []
 		| Eqn (IVar (Ident (name, Bool)), Const (BoolC b)) -> [(if b then Is1 (Tnode name) else Is0 (Tnode name))]
-		| AndForm (Eqn (IVar (Ident (name, Bool)), Const (BoolC b)), nestedForm ) -> (if b then Is1 (Tnode name) else Is0 (Tnode name)) :: (toIsList nestedForm)
+		| Eqn (IVar (Ident (name, Bool)), Const (SymbBoolC v_str)) -> [isb (EVar (Bvariable v_str)) (Tnode name)]
+		(*| AndForm (Eqn (IVar (Ident (name, Bool)), Const (BoolC b)), nestedForm ) -> (if b then Is1 (Tnode name) else Is0 (Tnode name)) :: (toIsList nestedForm)*)
+		| AndForm (nestedForm1, nestedForm2) -> (toIsList nestedForm1)@(toIsList nestedForm2)
 		| _ -> raise (Failure "In bitForm2trajForm: error ") 
 	in
 	let res = toIsList form in
@@ -237,7 +242,21 @@ let nodeToInt : node -> int = function
 (*********************************** to forte input file *******************************************)
 
 (** gsteSpec to forte input AG *)
-let toFL gs =   
+let toFL gs model_name =   
+	let rec trans trajf = 
+		match trajf with 
+		| TChaos -> []
+		| Is1 (Tnode name) -> [Printf.sprintf "Is1 \"%s\"" name]
+		| Is0 (Tnode name) -> [Printf.sprintf "Is0 \"%s\"" name]
+		| Guard (be, tf) -> (
+			match (trans tf) with 
+			|[] -> [Printf.sprintf "Guard (%s) (%s)" (bExpr2FLbExprList be) "Chaos"]
+			| f::[] -> [Printf.sprintf "Guard (%s) (%s)" (bExpr2FLbExprList be) f]
+			| fs -> [Printf.sprintf "Guard (%s) (%s)" (bExpr2FLbExprList be) "TAndList [" ^ (String.concat "," fs) ^ "]"]
+		)			
+		| TAndList ts ->  List.flatten (List.map (fun f -> trans f) ts)
+		| _ -> raise (Invalid_argument "this is for boolean level trajectory formula")
+	in 
 	let main_assertion_graph init_node node_set edge_set =
 		match init_node with (Vertex inum) -> Printf.fprintf stdout "let vertexI = Vertex %d;\n" inum ;
 		Printf.fprintf stdout "%s" ("let vertexL = [" ^ (String.concat "," (List.map (fun (Vertex i) -> Printf.sprintf "Vertex %d" i) node_set)) ^ "];\n" );
@@ -248,14 +267,6 @@ let toFL gs =
 			let term_f = ants e in
 			let bit_f = termForm2bitForm term_f in
 			let traj_f = bitForm2trajForm bit_f in
-			let rec trans trajf = 
-				match trajf with 
-				| TChaos -> []
-				| Is1 (Tnode name) -> [Printf.sprintf "Is1 \"%s\"" name]
-				| Is0 (Tnode name) -> [Printf.sprintf "Is0 \"%s\"" name]
-				| TAndList ts ->  List.flatten (List.map (fun f -> trans f) ts)
-				| _ -> raise (Invalid_argument "this is for boolean level trajectory formula")
-			in 
 			let add_myclk fs =
 				match fs with 
 				| [] -> "TAndList []"
@@ -284,15 +295,7 @@ let toFL gs =
 		let cons_traj e = 
 			let term_f = cons e in
 			let bit_f = termForm2bitForm term_f in
-			let traj_f = bitForm2trajForm bit_f in
-			let rec trans t = 
-				match t with 
-					| TChaos -> []
-					| Is1 (Tnode name) -> [Printf.sprintf "Is1 \"%s\"" name]
-					| Is0 (Tnode name) -> [Printf.sprintf "Is0 \"%s\"" name]
-					| TAndList ts -> List.flatten (List.map (fun f -> trans f) ts)
-					| _ -> raise (Invalid_argument "this is for boolean level trajectory formula")
-			in 
+			let traj_f = bitForm2trajForm bit_f in 
 			let add_tandlist ts =
 				match ts with
 				| [] -> "TAndList []"
@@ -318,12 +321,12 @@ let toFL gs =
 	)
 	in 
 	match gs with Graph (init_node , node_set, edge_set, ants, cons) -> (
-		Printf.fprintf stdout "%s" 
+		Printf.fprintf stdout 
 "
-let ckt = load_exe \"counter.exe\";
+let ckt = load_exe \"%s.exe\";
 load \"gsteSymReduce.fl\";
 loadModel ckt;
-";
+" model_name;
 		main_assertion_graph init_node node_set edge_set;
 		ant_function init_node node_set edge_set ants;
 		cons_function init_node node_set edge_set cons ;

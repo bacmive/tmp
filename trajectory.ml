@@ -7,6 +7,13 @@ type bExpr =
 	| EOr of bExpr * bExpr
 	| ENeg of bExpr
 
+let rec bExpr2FLbExprList be =
+	match be with
+	| EVar (Bvariable name)-> Printf.sprintf "bvariable \"%s\"" name
+	| EAnd (be1, be2) -> (bExpr2FLbExprList be1)^ "bAND" ^(bExpr2FLbExprList be2)
+	| EOr (be1, be2) -> (bExpr2FLbExprList be1)^ "bOR" ^(bExpr2FLbExprList be2)
+	| ENeg be0 -> "bNOT" ^ (bExpr2FLbExprList be0)
+
 type trajNode = Tnode of string
 
 type trajForm = 
@@ -16,6 +23,8 @@ type trajForm =
 	| Guard of bExpr * trajForm
 	| TAndList of trajForm list
 	| TChaos
+
+let isb p tnode = TAndList [Guard (p, Is1 tnode); Guard (p, Is0 tnode)]
 
 (** 将trajectory formula 转换为字符串*)
 let rec bExpr2str be =
@@ -30,6 +39,7 @@ let rec trajForm2str f =
 	| Is1 (Tnode str) -> Printf.sprintf " Is1 %s" str
 	| Is0 (Tnode str) -> Printf.sprintf " Is0 %s" str
 	| Next tf 		  -> Printf.sprintf " Next (%s)" (trajForm2str tf)
-	| Guard (be, tf)  -> Printf.sprintf " Guard (%s, %s)" (bExpr2str be) (trajForm2str tf)
-	| TAndList ts     -> Printf.sprintf "TAndList [%s]" (List.fold_right (^) (List.map (fun t -> (trajForm2str t)^";") ts) "")
+	| Guard (be, tf)  -> Printf.sprintf " Guard (%s,%s)" (bExpr2str be) (trajForm2str tf)
+	| TAndList ts     -> Printf.sprintf " TAndList [%s]" (String.concat ";" (List.map (fun t -> trajForm2str t) ts))
 	| TChaos 		  -> "TChaos"
+
