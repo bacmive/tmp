@@ -4,7 +4,7 @@ load "gsteSymReduce.fl";
 loadModel ckt;
 let vertexI = Vertex 0;
 let vertexL = [Vertex 0,Vertex 1,Vertex 3,Vertex 4,Vertex 5,Vertex 6,Vertex 7,Vertex 8,Vertex 9,Vertex 10];
-let edgeL = [Edge (Vertex 1) (Vertex 1),Edge (Vertex 1) (Vertex 1),Edge (Vertex 3) (Vertex 3),Edge (Vertex 5) (Vertex 5),Edge (Vertex 7) (Vertex 7),Edge (Vertex 9) (Vertex 9),Edge (Vertex 1) (Vertex 3),Edge (Vertex 3) (Vertex 5),Edge (Vertex 5) (Vertex 7),Edge (Vertex 7) (Vertex 9),Edge (Vertex 9) (Vertex 7),Edge (Vertex 7) (Vertex 5),Edge (Vertex 5) (Vertex 3),Edge (Vertex 3) (Vertex 1),Edge (Vertex 1) (Vertex 4),Edge (Vertex 3) (Vertex 6),Edge (Vertex 5) (Vertex 8),Edge (Vertex 7) (Vertex 10),Edge (Vertex 10) (Vertex 8),Edge (Vertex 8) (Vertex 6),Edge (Vertex 6) (Vertex 4),Edge (Vertex 4) (Vertex 2)];
+let edgeL = [Edge (Vertex 0) (Vertex 1),Edge (Vertex 1) (Vertex 1),Edge (Vertex 3) (Vertex 3),Edge (Vertex 5) (Vertex 5),Edge (Vertex 7) (Vertex 7),Edge (Vertex 9) (Vertex 9),Edge (Vertex 1) (Vertex 3),Edge (Vertex 3) (Vertex 5),Edge (Vertex 5) (Vertex 7),Edge (Vertex 7) (Vertex 9),Edge (Vertex 9) (Vertex 7),Edge (Vertex 7) (Vertex 5),Edge (Vertex 5) (Vertex 3),Edge (Vertex 3) (Vertex 1),Edge (Vertex 1) (Vertex 4),Edge (Vertex 3) (Vertex 6),Edge (Vertex 5) (Vertex 8),Edge (Vertex 7) (Vertex 10),Edge (Vertex 10) (Vertex 8),Edge (Vertex 8) (Vertex 6),Edge (Vertex 6) (Vertex 4),Edge (Vertex 4) (Vertex 2)];
 let ant aEdge = 
 	val (Edge (Vertex from) (Vertex to)) = aEdge
 	in 
