@@ -14,7 +14,7 @@ let vertexI = Vertex 0
 let vertexL = vertexI :: ((Vertex 1):: (List.map (fun i -> Vertex i) (upt 3 (2*last+4))))
 let edgeL = [Edge (vertexI,(Vertex 1))] @ 
             (List.map (fun i -> Edge (Vertex (2*i+1), Vertex (2*i+1)))  (upt 0 depth))@
-            (List.map (fun i -> Edge (Vertex (2*i+2), Vertex (2*i+2)))  (upt 1 depth))@
+            (List.map (fun i -> Edge (Vertex (2*i-1), Vertex (2*i+1)))  (upt 1 depth))@
             (List.map (fun i -> Edge (Vertex (2*i+1), Vertex (2*i-1)))  (dwt depth 1))@
             (List.map (fun i -> Edge (Vertex (2*i-1), Vertex (2*i+2)))  (upt 1 depth))@
             (List.map (fun i -> Edge (Vertex (2*i+2), Vertex (2*i)))    (dwt depth 1))
