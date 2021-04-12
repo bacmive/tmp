@@ -10,9 +10,9 @@ type bExpr =
 let rec bExpr2FLbExprList be =
 	match be with
 	| EVar (Bvariable name)-> Printf.sprintf "bvariable \"%s\"" name
-	| EAnd (be1, be2) -> (bExpr2FLbExprList be1)^ "bAND" ^(bExpr2FLbExprList be2)
-	| EOr (be1, be2) -> (bExpr2FLbExprList be1)^ "bOR" ^(bExpr2FLbExprList be2)
-	| ENeg be0 -> "bNOT" ^ (bExpr2FLbExprList be0)
+	| EAnd (be1, be2) -> "(" ^ (bExpr2FLbExprList be1)^ "bAND" ^(bExpr2FLbExprList be2)^ ")"
+	| EOr (be1, be2) -> "(" ^ (bExpr2FLbExprList be1)^ "bOR" ^(bExpr2FLbExprList be2) ^ ")"
+	| ENeg be0 -> "(bNOT (" ^ (bExpr2FLbExprList be0) ^"))"
 
 type trajNode = Tnode of string
 
@@ -24,7 +24,7 @@ type trajForm =
 	| TAndList of trajForm list
 	| TChaos
 
-let isb p tnode = TAndList [Guard (p, Is1 tnode); Guard (p, Is0 tnode)]
+let isb p tnode = TAndList [Guard (p, Is1 tnode); Guard ((ENeg p), Is0 tnode)]
 
 (** 将trajectory formula 转换为字符串*)
 let rec bExpr2str be =
