@@ -1,9 +1,9 @@
-module memory (clk, wr, addr ,din, dout);
+module memory (clk, wr, re, addr ,din, dout);
 	parameter DATA_WIDTH = 2;
 	parameter ADDR_WIDTH = 2;
 	parameter MEM_DEPTH = 1 << ADDR_WIDTH;
 	
-	input clk, wr;
+	input clk, wr, re;
 	input [DATA_WIDTH-1:0] din;
 	input [ADDR_WIDTH-1:0] addr;
 	output[DATA_WIDTH-1:0] dout;
@@ -16,6 +16,6 @@ module memory (clk, wr, addr ,din, dout);
 		if (wr) begin
 			mem[addr] = din;
 		end
-		dout = (!wr) ? (mem[addr]) : dout;
+		dout = (!wr && re) ? (mem[addr]) : dout;
 	end
 endmodule
