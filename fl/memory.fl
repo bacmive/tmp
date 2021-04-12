@@ -40,7 +40,7 @@ let cons aEdge =
 	(from = 0 AND to = 1) => Chaos
 	| (from = 1 AND to = 1) => Chaos
 	| LastReadData vOfDataIn
-
+;
 let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
 
 let binNodes = [];
