@@ -86,7 +86,9 @@ Output:
 TAndList [ Is0 rst0; Is1 push0; Is0 pop0; TAndList [ Guard ( din<3>0(EVar) , Is1 dataIn<3>0); Guard ( din<3>0(EVar) , Is0 dataIn<3>0)]; TAndList [ Guard ( din<2>0(EVar) , Is1 dataIn<2>0); Guard ( din<2>0(EVar) , Is0 dataIn<2>0)]; TAndList [ Guard ( din<1>0(EVar) , Is1 dataIn<1>0); Guard ( din<1>0(EVar) , Is0 dataIn<1>0)]; TAndList [ Guard ( din<0>0(EVar) , Is1 dataIn<0>0); Guard ( din<0>0(EVar) , Is0 dataIn<0>0)]]
 *)	
 
-let () =
-	toFL rbfifoGsteSpec "rbfifo"
+let head = IVar (Ident ("head", Int index_length))
+let tail = IVar (Ident ("tail", Int index_length))
+let binNodes = [head;tail]
 
-	
+let () =
+	toFL rbfifoGsteSpec "rbfifo" binNodes
