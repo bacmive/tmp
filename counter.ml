@@ -1,6 +1,6 @@
 open B_types
-open Tools
 open Trajectory
+open Tools
 
 let last = 3
 let data_size = 2
@@ -90,42 +90,8 @@ let pprint () =
 			) vertexL
 
 (** transform gsteSpec to forte file *)
+
+let binNodes = []
+
 let () = 
-	toFL counterGsteSpec
-
-
-
-
-(***************** tools to translate a integer to boolean vectors ********************)
-(**
-	e.g. 
-	translate 3 into 2-bit boolean vector:
-	[true; true]
-
-let decToBin_helper = function 
-  | 1 -> true
-  | 0 -> false
-  | _ -> raise (Failure "jackass")
-    
-let decToBin x =
-  let rec d2b y lst = 
-    match y with 
-    |0 -> lst
-    |_ -> d2b (y/2) ((decToBin_helper (y mod 2))::lst)
-  in
-  d2b x [] 
-
-let intToBinVec value size =
-  let res = Array.make size false in
-  let bin = List.rev (decToBin value) in
-  let length = List.length bin in 
-  let rec make_list_from_n n =
-    match n with
-    | 0 -> []
-    | m -> ((make_list_from_n (m-1))@[(m-1)])
-  in
-  let indexes = make_list_from_n length in 
-  List.iter (fun (v, i) -> Array.set res (size-1-i) v) (List.combine bin indexes);
-  Array.to_list res
-(*******************************************************)
-*)
+	toFL counterGsteSpec "counter" binNodes
