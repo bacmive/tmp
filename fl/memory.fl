@@ -1,50 +1,32 @@
-load "gsteSymReduce.fl";
+
 let ckt = load_exe "memory.exe";
-loadModel (ckt);
-
-let DLEN = 2; //data length
-let ALEN = 2; // address length
-let DEPTH = 4; // memory depth
-
-let addrIn = map (\i. ("addr<" ^ (int2str i) ^ ">0") (0 upto (ALEN-1));
-let dataIn = map (\i. ("din<" ^ (int2str i) ^ ">0") (0 upto (DLEN-1));
-let dataOut = map (\i. ("dout<" ^ (int2str i) ^ ">0") (0 upto (DLEN-1));
-let vOfAddrIn = map (\str. bvariable str) addrIn;
-let vOfDataIn = map (\str. bvariable str) dataIn;
-
-//action of assertion graph
-let myclk = TAndList [Is0 "CLK", Next (Is1 "CLK")];
-let write = TAndList [Is1 "wr", myclk];
-let read = TAndList [Is1 "re", Is0 "wr", myclk];
-let nWriteRead = TAndList [Is0 "wr", Is0 "re"];
-
-let writeDataAt D A = TAndList[write, dataIn bvAre D, addrIn bvAre A, myclk];
-let readAt A = TAndList [read, addrIn bvAre A, myclk];
-let LastReadData D = dataOut bvAre D;
-
+load "gsteSymReduce.fl";
+loadModel ckt;
 let vertexI = Vertex 0;
-let vertexL = vertexI:[Vertex 1, Vertex 2];
-let edgeL = [Edge vertexI (Vertex 1), Edge (Vertex 1) (Vertex 1), Edge (Vertex 1) (Vertex 2)];
-
+let vertexL = [Vertex 0,Vertex 1,Vertex 2];
+let edgeL = [Edge (Vertex 0) (Vertex 1),Edge (Vertex 1) (Vertex 1),Edge (Vertex 1) (Vertex 2)];
 let ant aEdge = 
 	val (Edge (Vertex from) (Vertex to)) = aEdge
-	in
-	(from = 0 AND to = 1) => writeDataAt vOfDataIn vOfAddrIn
-	| (from = 1 AND to = 1) => nWriteRead
-	| readAt vOfAddrIn
+	in 
+	((from = 0) AND (to = 1)) => TAndList [Is1 "wr0",Guard (bvariable "din<1>0") (Is1 "din<1>0"),Guard ((bNOT (bvariable "din<1>0"))) (Is0 "din<1>0"),Guard (bvariable "din<0>0") (Is1 "din<0>0"),Guard ((bNOT (bvariable "din<0>0"))) (Is0 "din<0>0"),Guard (bvariable "addr<1>0") (Is1 "addr<1>0"),Guard ((bNOT (bvariable "addr<1>0"))) (Is0 "addr<1>0"),Guard (bvariable "addr<0>0") (Is1 "addr<0>0"),Guard ((bNOT (bvariable "addr<0>0"))) (Is0 "addr<0>0"),Is0 "CLK",Next (Is1 "CLK")] 
+	| ((from = 1) AND (to = 1)) => TAndList [Is0 "wr0",Is0 "re0",Is0 "CLK",Next (Is1 "CLK")] 
+	| ((from = 1) AND (to = 2)) => TAndList [Is0 "wr0",Is1 "re0",Guard (bvariable "addr<1>0") (Is1 "addr<1>0"),Guard ((bNOT (bvariable "addr<1>0"))) (Is0 "addr<1>0"),Guard (bvariable "addr<0>0") (Is1 "addr<0>0"),Guard ((bNOT (bvariable "addr<0>0"))) (Is0 "addr<0>0"),Is0 "CLK",Next (Is1 "CLK")] 
+	| error "In cons: missing case"
 ;
 
-let cons aEdge =
+let cons aEdge = 
 	val (Edge (Vertex from) (Vertex to)) = aEdge
-	in
-	(from = 0 AND to = 1) => Chaos
-	| (from = 1 AND to = 1) => Chaos
-	| LastReadData vOfDataIn
+	in 
+	((from = 0) AND (to = 1)) => TAndList [] 
+	| ((from = 1) AND (to = 1)) => TAndList [] 
+	| ((from = 1) AND (to = 2)) => TAndList [Guard (bvariable "din<1>0") (Is1 "dout<1>0"),Guard ((bNOT (bvariable "din<1>0"))) (Is0 "dout<1>0"),Guard (bvariable "din<0>0") (Is1 "dout<0>0"),Guard ((bNOT (bvariable "din<0>0"))) (Is0 "dout<0>0")] 
+	| error "In cons: missing case"
 ;
+
+
 let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
-
 let binNodes = [];
-
 lemma "lemmaTMain" mainGoal;
-	by (gsteSymbSim binNodes);	//graph-Sym
+	by (gsteSymbSim binNodes);
 done 0;
+quit;
