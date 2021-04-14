@@ -4,18 +4,18 @@
 #'write_blif -c' options.
 .model counter
 .inputs rst0 
-.outputs dout<1>0 dout<0>0 # 1 -> 01 (dout<1>0和dout<0>0分别代表？)
-.latch _n10<1>0 dout<1>0 2
-.latch _n10<0>0 dout<0>0 2
+.outputs dout<0>0 dout<1>0 
+.latch _n11<0>0 last<0>0 2
+.latch _n11<1>0 last<1>0 2
 .names rst0 _n00 
 1 1
 .names _n2<0>0
 0
 .names _n2<1>0
 0
-.names _n2<0>0 dout$rst_n1$true<0>0 
+.names _n2<0>0 last$rst_n1$true<0>0 
 1 1
-.names _n2<1>0 dout$rst_n1$true<1>0 
+.names _n2<1>0 last$rst_n1$true<1>0 
 1 1
 .names _n4<0>0
 1
@@ -23,39 +23,47 @@
 0
 .names _n60
 0
-.names dout<0>0 _n4<0>0 _n60 _n5<0>0 
+.names last<0>0 _n4<0>0 _n60 _n5<0>0 
 001 1
 010 1
 100 1
 111 1
 .names _n80
 0
-.names dout<0>0 _n4<0>0 _n80 _n70 
+.names last<0>0 _n4<0>0 _n80 _n70 
 -11 1
 1-1 1
 11- 1
-.names dout<1>0 _n4<1>0 _n70 _n5<1>0 
+.names last<1>0 _n4<1>0 _n70 _n5<1>0 
 001 1
 010 1
 100 1
 111 1
-.names _n5<0>0 dout$rst_n3$false<0>0 
+.names _n5<0>0 last$rst_n3$false<0>0 
 1 1
-.names _n5<1>0 dout$rst_n3$false<1>0 
+.names _n5<1>0 last$rst_n3$false<1>0 
 1 1
-.names rst0 dout$rst_n1$true<0>0 dout$rst_n3$false<0>0 dout$rst$raw_na<0>0 
+.names rst0 last$rst_n1$true<0>0 last$rst_n3$false<0>0 last$rst$raw_na<0>0 
 11- 1
 0-1 1
-.names rst0 dout$rst_n1$true<1>0 dout$rst_n3$false<1>0 dout$rst$raw_na<1>0 
+.names rst0 last$rst_n1$true<1>0 last$rst_n3$false<1>0 last$rst$raw_na<1>0 
 11- 1
 0-1 1
-.names _n00 _nf0 
+.names last<0>0 dout$raw_nf<0>0 
+1 1
+.names last<1>0 dout$raw_nf<1>0 
+1 1
+.names dout$raw_nf<0>0 dout<0>0 
+1 1
+.names dout$raw_nf<1>0 dout<1>0 
+1 1
+.names _n00 _n100 
 1 1
 0 1
-.names _nf0 dout$rst$raw_na<0>0 dout$rst$raw_na<1>0 dout<0>0 dout<1>0 _n10<0>0 
+.names _n100 last$rst$raw_na<0>0 last$rst$raw_na<1>0 last<0>0 last<1>0 _n11<0>0 
 11--- 1
 0--1- 1
-.names _nf0 dout$rst$raw_na<0>0 dout$rst$raw_na<1>0 dout<0>0 dout<1>0 _n10<1>0 
+.names _n100 last$rst$raw_na<0>0 last$rst$raw_na<1>0 last<0>0 last<1>0 _n11<1>0 
 1-1-- 1
 0---1 1
 .exdc

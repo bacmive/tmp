@@ -1,14 +1,19 @@
 module counter ( clk, rst, dout);
-    output [1:0] dout;
-    input clk, rst;
+	parameter LAST = 1;
+	parameter MSBD = 1;
     
-    reg [1:0] dout
+    input clk, rst;
+    output [MSBD:0] dout;
+    reg [1:0] last;
     
     always@ (posedge clk) begin
         if (rst)
-            dout = 2'b0;
+            last = 2'b0;
         else begin
-            dout = dout + 1;
+            last = last + 1;
         end
     end
+	
+	assign dout = last;
+	
 endmodule
