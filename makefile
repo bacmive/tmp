@@ -4,10 +4,14 @@
 # ocamlbuild -use-ocamlfind '${OBJ}' 
 .PHONY: all clean
 OBJ= fifo.native
-all:
-	mv _tags js
+
+all: memory counter
+
+memory:
+	ocamlbuild 'memory.native'
+
+counter:
 	ocamlbuild 'counter.native'
-	mv js _tags
 
 fifo:
 	ocamlbuild -use-ocamlfind '${OBJ}'
