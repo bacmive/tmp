@@ -7,7 +7,7 @@ module counter ( clk, rst, dout);
     
     always@ (posedge clk) begin
         if (rst)
-            last = 2'b0;
+            last = (MSBD+1)'b0;
         else begin
             last = last + 1;
         end
