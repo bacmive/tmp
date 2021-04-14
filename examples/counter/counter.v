@@ -1,5 +1,4 @@
 module counter ( clk, rst, dout);
-	parameter LAST = 1;
 	parameter MSBD = 1;
     
     input clk, rst;
