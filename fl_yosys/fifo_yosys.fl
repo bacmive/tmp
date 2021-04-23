@@ -137,7 +137,6 @@ let check aEdge =
 	check_next_ant conss antss => T 
 	| F
 ;
-
 let test void =
 	let a =  TAndList [Is0 "rst",Is0 "push",Is1 "pop",Is0 "CLK",Next (Is1 "CLK")] in
 	let c = TAndList [Is0 "dataOut<1>",Is1 "dataOut<0>"] in

@@ -33,7 +33,7 @@ module rbFIFO(clock,rst,dataIn,push,pop,dataOut,full,empty);
 			head = 0;
 			full = 0;
 	              empty = 1;
-                 end
+    end
 	else if (push & ~full) begin
 	    mem[tail] = dataIn;
 	    tail = tail + 1;
