@@ -56,15 +56,15 @@ let cons aEdge =
 	| ((from = 10) AND (to = 8)) => TAndList [Is0 "empty",Is1 "full"] 
 	| ((from = 8) AND (to = 6)) => TAndList [Is0 "empty",Is0 "full"] 
 	| ((from = 6) AND (to = 4)) => TAndList [] 
-	| ((from = 4) AND (to = 1)) => TAndList [Is0 "dataOut<1>",Is1 "dataOut<0>"] 
+	| ((from = 4) AND (to = 1)) => TAndList [] 
 	| error "In cons: missing case"
 ;
 
 
 // tag invariants
-let myMem i= map (\j. ("mem<" ^ (int2str i)^ "><" ^ (int2str j) ^ ">")) (0 upto 1);
+let myMem i= map (\j. ("mem<"^(int2str i)^"><"^(int2str j)^">")) (0 upto 1);
 let memIs i= 
-	TAndList [Is0 ("mem<" ^ (int2str i)^ "><1>"), Is1 ("mem<" ^ (int2str i)^ "><0>")]
+	TAndList [Is0 ("mem<"^(int2str i)^"><1>"), Is1 ("mem<"^(int2str i)^"><0>")]
 ;
 
 let head = map (\i. ("head<" ^ (int2str i) ^ ">")) (0 upto 1);
@@ -137,27 +137,44 @@ let check aEdge =
 	check_next_ant conss antss => T 
 	| F
 ;
+
 let test void =
 	let a =  TAndList [Is0 "rst",Is0 "push",Is1 "pop",Is0 "CLK",Next (Is1 "CLK")] in
-	let c = TAndList [Is0 "dataOut<1>",Is1 "dataOut<0>"] in
 	let ta = TAndList [nempty, nfull, tailIs 1, headIs 0, memIs 0] in
+	let c = TAndList [Is0 "dataOut<1>",Is1 "dataOut<0>"] in
 	let tc = Next (TAndList [empty, nfull, tailIs 1, headIs 1]) in
     let aant = TAndList [a, ta] in
-    let ccon = TAndList [c] in
+    let ccon = TAndList [tc] in
     let ats = trajForm2FiveTuples aant in
     let cns = trajForm2FiveTuples ccon in
-    let trace_vals = [("dataOut<0>", 0, 2) ] 
+    let trace_vals = [("dataOut<0>", 0, 2), ("dataOut<1>", 0, 2) ] 
     then 
-        (STE "-w -y -S" ckt [] ats cns trace_vals)
-        fseq
-        let v1 = get_trace_val ckt "dataOut<0>" 2 in
-        v1
-        //(STE "-w -y -S" ckt [] ats cns trace_vals) => T
-        //| F
+        //(STE "-w -y -S" ckt [] ats cns trace_vals)
+        //fseq
+        //let v1 = get_trace_val ckt "dataOut<1>" 2 in
+        //v1
+        (STE "-w -y -S" ckt [] ats cns trace_vals) => T
+        | F
 ;
 
-//itlist (\x. \y. x AND y) (map (\e. check e) edgeL) T;
-check (Edge (Vertex 4) (Vertex 1)); //F
+itlist (\x. \y. x AND y) (map (\e. check e) edgeL) T;
+//print (trajForm2Str (memIs 3));
+//check (Edge (Vertex 0) (Vertex 1));
+//check (Edge (Vertex 1) (Vertex 3));
+//test 1;
+//check (Edge (Vertex 3) (Vertex 5));
+//check (Edge (Vertex 5) (Vertex 7));
+//check (Edge (Vertex 7) (Vertex 9));
+//check (Edge (Vertex 7) (Vertex 10));
+//check (Edge (Vertex 1) (Vertex 4));
+//check (Edge (Vertex 6) (Vertex 4));
+//check (Edge (Vertex 8) (Vertex 6));
+//check (Edge (Vertex 10) (Vertex 8));
+//check (Edge (Vertex 9) (Vertex 7));
+//check (Edge (Vertex 7) (Vertex 5));
+//check (Edge (Vertex 5) (Vertex 3));
+//check (Edge (Vertex 3) (Vertex 1));
+//check (Edge (Vertex 4) (Vertex 1));
 //let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
 //let binNodes = [];
 //lemma "lemmaTMain" mainGoal;
