@@ -2,15 +2,16 @@ open Tools
 open Trajectory
 
 let visCLKname = "CLK"
+let yosysCLKname = "CLK"
  
 type scalar = 
-  | IntC of int * int
+  | IntC of int * int (* value * size *)
   | BoolC of bool
   | SymbIntC of string * int
   | SymbBoolC of string
       
 type sort = 
-  | Int of int
+  | Int of int (* size *)
   | Bool
   | Array of int * sort
              
@@ -28,13 +29,35 @@ and formula =
   | OrForm of formula * formula
   | ImplyForm of formula * formula
   | Chaos
+  
+(* case expression *)
+type formulaExpPair = formula * expression
+
+let rec caseExpression : formulaExpPair list -> expression = function
+  | (f, e)::[] -> IteForm (f, e, e)
+  | (f, e)::t -> IteForm (f, e, (caseExpression t))
+  | _ -> raise (Failure "case expression format error")
+  
+let readArray (v : var) (e : expression) : expression =
+	match v,e with 
+	| (Ident (name, Array (length, Bool)), Const (IntC(value, index_size))) -> 
+		caseExpression (List.map (fun i -> (Eqn (e, (Const (IntC (i,index_size)))), IVar (Para (v, Const (IntC (i, index_size)))))) (upt 0 (length-1)))
+	| (Ident (name, Array (length, Bool)), IVar (Ident (var_name, Int index_size))) ->
+		caseExpression (List.map (fun i -> (Eqn (e, (Const (IntC (i, index_size)))), IVar (Para (v, Const (IntC (i, index_size)))))) (upt 0 (length-1)))
+	| _ -> raise (Invalid_argument "In readArray: not matched argument")
 
 (** mapping function*)
 let formatMapVIS ?axis1:(a1=(-1)) ?axis2:(a2=(-1)) (name : string) =
   if a1 < 0 then name ^ "0"
   else if a2 < 0 then name ^ "<" ^ (string_of_int a1) ^ ">0"
   else name ^ "<*" ^ (string_of_int a1) ^ "*>" ^ "<" ^ (string_of_int a2) ^ ">0"
-  
+
+let formatMapYosys ?axis1:(a1=(-1)) ?axis2:(a2=(-1)) (name : string) =
+	if (a1<0) then name
+	else if a2 < 0 then name ^ "<" ^ (string_of_int a1) ^ ">"
+	else name ^ "<" ^ (string_of_int a1) ^ ">" ^ "<" ^ (string_of_int a2) ^ ">"
+	
+
 (** term level scalar to boolean vector of 0/1 *)
 let termScalar2bitVecConst (c : scalar) : scalar list =
   match c with
@@ -63,9 +86,9 @@ let termScalar2bitVecConst (c : scalar) : scalar list =
     )
     | BoolC b -> [(BoolC b)]
 	| SymbIntC (name, i_size) -> (
-		List.map (fun i -> SymbBoolC (formatMapVIS ~axis1:i name)) (dwt (i_size-1) 0)
+		List.map (fun i -> SymbBoolC (formatMapYosys ~axis1:i name)) (dwt (i_size-1) 0)
 	)
-	| SymbBoolC name -> [(SymbBoolC (formatMapVIS name))]
+	| SymbBoolC name -> [(SymbBoolC (formatMapYosys name))]
 	(*| _ -> raise (Failure "In termScalar2bitVecConst: WRONG USAGE: can't work on symbolic const data")*)
 	
 
@@ -74,20 +97,20 @@ let rec termVar2bitVecVar (v : var) : var list =
   match v with
 	| Ident (str, typ) -> (
 		match typ with
-		| Int size -> List.map (fun i -> Ident (formatMapVIS ~axis1:i str, Bool)) (dwt (size-1) 0 )
-		| Bool -> [Ident (formatMapVIS str, Bool)]
+		| Int size -> List.map (fun i -> Ident (formatMapYosys ~axis1:i str, Bool)) (dwt (size-1) 0 )
+		| Bool -> [Ident (formatMapYosys str, Bool)]
 		| Array (index_size, typ1) -> (
 			match typ1 with 
 			| Int data_size -> (
 					let twoDimension =List.map (fun i -> (
-										List.map (fun j -> Ident (formatMapVIS ~axis1:i ~axis2:j str, Bool)) (dwt (data_size-1) 0 )
+										List.map (fun j -> Ident (formatMapYosys ~axis1:i ~axis2:j str, Bool)) (dwt (data_size-1) 0 )
 									)
 								) (dwt (index_size-1) 0 ) 
 					in
 					List.flatten twoDimension
 				)
 			| Bool -> (
-				List.map (fun i -> Ident (formatMapVIS ~axis1:i str, Bool) ) (dwt (index_size -1) 0) 
+				List.map (fun i -> Ident (formatMapYosys ~axis1:i str, Bool) ) (dwt (index_size -1) 0) 
 				)
 			| _ ->raise (Failure "Not Supported Nested Array Yet")
 		)
@@ -96,11 +119,11 @@ let rec termVar2bitVecVar (v : var) : var list =
 		match v,expr with
 		|(Ident (str_v, Array(i_size, Int d_size)), Const (IntC(value, size))) ->(
 			if ( i_size != size ) then raise (Failure " size not match ")
-			else List.map (fun j -> Ident (formatMapVIS ~axis1:value ~axis2:j str_v, Bool))  (dwt (d_size-1) 0)
+			else List.map (fun j -> Ident (formatMapYosys ~axis1:value ~axis2:j str_v, Bool))  (dwt (d_size-1) 0)
 		)
 		| (Ident (str_v, Array(i_size, Bool)), Const (IntC(value, size))) -> (
 			if( i_size != size ) then raise (Failure " size not match ")
-			else [Ident (formatMapVIS ~axis1:value str_v, Bool)]
+			else [Ident (formatMapYosys ~axis1:value str_v, Bool)]
 		)
 		| _ -> raise (Failure "Not Supported Expression")
 	)
@@ -191,10 +214,10 @@ and bitForm2str f =
 let symbScalar2TrajVar cnst =
 	match cnst with
 	| SymbIntC (name, size) -> (
-		List.map (fun i -> Bvariable (formatMapVIS ~axis1:i name)) (dwt (size-1) 0)
+		List.map (fun i -> Bvariable (formatMapYosys ~axis1:i name)) (dwt (size-1) 0)
 	)
 	| SymbBoolC name -> (
-		[Bvariable (formatMapVIS name)]
+		[Bvariable (formatMapYosys name)]
 	)
 	|_ -> raise (Failure "In boolScalar2TrajVar: unsupported type")
 
@@ -207,6 +230,8 @@ let bitForm2trajForm form =
 	let rec toIsList f = 
 		match f with
 		| Chaos -> []
+		| Eqn (IVar (Ident (name1, Bool)), IVar (Ident (name2, Bool))) -> []
+		| Eqn (IVar (Ident (name1, Int size1)), IVar (Ident (name2, Int size2))) -> []
 		| Eqn (IVar (Ident (name, Bool)), Const (BoolC b)) -> [(if b then Is1 (Tnode name) else Is0 (Tnode name))]
 		| Eqn (IVar (Ident (name, Bool)), Const (SymbBoolC v_str)) -> [isb (EVar (Bvariable v_str)) (Tnode name)]
 		(*| AndForm (Eqn (IVar (Ident (name, Bool)), Const (BoolC b)), nestedForm ) -> (if b then Is1 (Tnode name) else Is0 (Tnode name)) :: (toIsList nestedForm)*)
@@ -242,7 +267,7 @@ let nodeToInt : node -> int = function
 (*********************************** to forte input file *******************************************)
 
 (** gsteSpec to forte input AG *)
-let toFL gs model_name =   
+let toFL gs model_name binNodes=   
 	let rec trans trajf = 
 		match trajf with 
 		| TChaos -> []
@@ -320,6 +345,21 @@ let toFL gs model_name =
 		) 
 	)
 	in 
+	let binNodesPart binNodes = 
+		let ivar2str iv =
+			match iv with
+			| IVar (Ident (str, Int n)) -> List.map (fun i -> formatMapYosys ~axis1:i str) (upt 0 (n-1))
+			| IVar (Ident (str, Bool)) -> [formatMapYosys str]
+			| _ -> raise (Invalid_argument "In toFL binNodesPart: sry la")
+		in
+		match binNodes with
+		| []  -> "[]"
+		| bns -> (
+			let strOfbns = (List.flatten (List.map (fun nd -> ivar2str nd) bns)) in
+			let addQuoteMark = List.map (fun sob -> "\""^sob^"\"") strOfbns in
+			"[" ^ (String.concat "," addQuoteMark) ^"]"
+		)
+	in
 	match gs with Graph (init_node , node_set, edge_set, ants, cons) -> (
 		Printf.fprintf stdout 
 "
@@ -330,13 +370,13 @@ loadModel ckt;
 		main_assertion_graph init_node node_set edge_set;
 		ant_function init_node node_set edge_set ants;
 		cons_function init_node node_set edge_set cons ;
-		Printf.fprintf stdout "%s" 
+		Printf.fprintf stdout
 "
 let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
-let binNodes = [];
+let binNodes = %s;
 lemma \"lemmaTMain\" mainGoal;
 	by (gsteSymbSim binNodes);
 done 0;
 quit;
-"		
+"  (binNodesPart binNodes)
 	)

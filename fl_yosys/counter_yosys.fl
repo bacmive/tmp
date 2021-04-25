@@ -1,0 +1,98 @@
+//-------------------------------------------------------------------------------//
+let ckt = load_exe "counter_yosys.exe";
+load "gsteSymReduce.fl";
+loadModel ckt;
+
+//structure parametres
+let DLEN = 2;
+let LAST = 3;
+
+//-------------------------------------------------------------------------------//
+
+//actions of assertion graph
+let myclk = TAndList [Is0 "CLK",Next (Is1 "CLK")];
+let rst = TAndList [Is1 "rst", myclk];
+let nrst = TAndList [Is0 "rst", myclk];
+let dout0 = TAndList [ Is0 "dout<1>", Is0 "dout<0>"];
+let dout1 = TAndList [ Is0 "dout<1>", Is1 "dout<0>"]; 
+let dout2 = TAndList [ Is1 "dout<1>", Is0 "dout<0>"]; 
+let dout3 = TAndList [ Is1 "dout<1>", Is1 "dout<0>"];
+
+//main assertion graph
+let vertexI = Vertex 0;
+let vertexL = vertexI : (map (\i. Vertex i)) (1 upto (LAST + 1));
+let edgeL = [Edge vertexI (Vertex 1)]
+			@ (map (\i. Edge (Vertex i) (Vertex (i+1))) (1 upto LAST))
+			@ [Edge (Vertex (LAST+1)) (Vertex 1)];
+
+
+let ant aEdge =
+	val (Edge (Vertex from) (Vertex to)) = aEdge
+	in
+	  ( (from = 0) AND (to = 1) ) => rst
+	| ( (from = 1) AND (to = 2) ) => nrst
+	| ( (from = 2) AND (to = 3) ) => nrst
+	| ( (from = 3) AND (to = 4) ) => nrst
+	| nrst
+;
+
+let cons aEdge = 
+	val (Edge (Vertex from) (Vertex to)) = aEdge
+	in
+	( (from = 0) AND (to = 1) ) => TAndList []
+	| ( (from = 1) AND (to = 2) ) => dout0
+		| ( (from = 2) AND (to = 3) )  => dout1
+			| ( (from = 3) AND (to = 4) ) => dout2
+				| dout3
+;
+
+//tag invariants
+let last0 = TAndList [Is0 "last<0>", Is0 "last<1>"];
+let last1 = TAndList [Is1 "last<0>", Is0 "last<1>"];
+let last2 = TAndList [Is0 "last<0>", Is1 "last<1>"];
+let last3 = TAndList [Is1 "last<0>", Is1 "last<1>"];
+
+let tag aVert =
+	val (Vertex x) = aVert
+in
+	(x=0) => TAndList []
+	| (x=1) => last0
+	| (x=2) => last1
+	| (x=3) => last2
+	| (x=4) => last3
+	| error "missing case"
+;
+
+let steSymbSimGoalfDirct ckt goal   =
+    	val (Goal bAnts assert) = goal 
+in    val (TImply ant cons) = assert 
+in    let ant = trajForm2FiveTuples ant 
+in    let bP = itlist (\bant. \b. bant bAND b) bAnts bT 
+in    let cons = trajForm2FiveTuples (Guard bP cons) 
+then
+  	//print ("ant\n"^(trajFiveTuple2Str ant)^"\n") fseq
+  	//print ("cons\n"^(trajFiveTuple2Str cons)^"\n") fseq
+   	(STE "-w -y -S"  ckt [] ant cons []) => T  
+|	F
+;
+
+let check aEdge = 
+	val (Edge from to) = aEdge in
+	val (Vertex n) = from in
+	val (Vertex n') = to in
+	let ants = tag from in
+	let antss = TAndList [ants, ant aEdge] in
+	let contss = TAndList [ Next (tag to), cons aEdge] in
+	let goal = Goal [] (TImply antss contss) in
+	steSymbSimGoalfDirct ckt goal 
+;
+
+itlist (\x. \y. x AND y) (map (\e. check e) edgeL) T;
+
+////call gste symbolic simulation
+//let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
+//let binNodes = [];
+//lemma "lemmaTMain" mainGoal;
+//	by (gsteSymbSim binNodes);
+//done 0;
+quit;

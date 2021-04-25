@@ -12,12 +12,14 @@ let index_length = 2
 (** main assertion graph *)
 let vertexI = Vertex 0
 let vertexL = vertexI :: ((Vertex 1):: (List.map (fun i -> Vertex i) (upt 3 (2*last+4))))
+(** odd-vertex selfloop edge, odd-vertex bidirection edge, odd-vertex to even-vertex edge, even-vertex backward edge , Vertex 4 to Vertex 1 edge*)
 let edgeL = [Edge (vertexI,(Vertex 1))] @ 
             (List.map (fun i -> Edge (Vertex (2*i+1), Vertex (2*i+1)))  (upt 0 depth))@
             (List.map (fun i -> Edge (Vertex (2*i-1), Vertex (2*i+1)))  (upt 1 depth))@
             (List.map (fun i -> Edge (Vertex (2*i+1), Vertex (2*i-1)))  (dwt depth 1))@
             (List.map (fun i -> Edge (Vertex (2*i-1), Vertex (2*i+2)))  (upt 1 depth))@
-            (List.map (fun i -> Edge (Vertex (2*i+2), Vertex (2*i)))    (dwt depth 1))
+            (List.map (fun i -> Edge (Vertex (2*i+2), Vertex (2*i)))    (dwt depth 2))@
+			[Edge ((Vertex 4), (Vertex 1))]
 
 
 (** actions of assertion graph *)
@@ -30,7 +32,7 @@ let dataIn   : expression = IVar (Ident ("dataIn", Int data_length))
 let dataOut  : expression = IVar (Ident ("dataOut", Int data_length))
 let low 	 : expression = Const (BoolC false) 
 let high 	 : expression = Const (BoolC true)
-let symbolDataIn  :  expression = Const (SymbIntC ("din", data_length))
+let readDataIn  :  expression = Const (IntC (1, data_length))
 let symbolDataOut :  expression = Const (SymbIntC ("dout", data_length))
 
 let rstFormula = Eqn (rst, high)
@@ -56,7 +58,7 @@ let antOfRbFIFO aEdge =
 			if (f = t) then noPopPushFormula
 			else if ((f + 2) == t) then pushFormula
 			else if ( f == (t+2)) then popFormula
-			else pushData symbolDataIn
+			else pushData readDataIn
 		)else popFormula
 	)
   )
@@ -70,8 +72,12 @@ let consOfRbFIFO aEdge =
 			else if (f == (2*depth+1)) then AndForm (noEmptyFormula, fullFormula)
 			else AndForm (noEmptyFormula, noFullFormula)
 		)else (
-			if (t == 2)  then popData symbolDataIn
-			else Chaos
+			if ((f == 4) && (t == 1)) then Chaos (*popData readDataIn*)
+			else if (f == (2*depth+2))  then AndForm (noEmptyFormula, fullFormula)
+			else if (f == 1) then AndForm (emptyFormula, noFullFormula)
+			else if (f == 0) then Chaos
+			else if (t == 4) then Chaos
+			else AndForm (noEmptyFormula, noFullFormula)
 		)  
 	)
   
