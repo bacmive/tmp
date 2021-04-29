@@ -2,19 +2,19 @@
 # install z3 with ocaml-api(make; make install; cd ~/.opam/4.06.1/lib/; mv Z3 z3)
 # _tags (true: package(z3), thread)
 # ocamlbuild -use-ocamlfind '${OBJ}' 
-.PHONY: all clean
-OBJ= fifo.native
+.PHONY: all clean memory fifo counter
+Z3_PATH = /home/cheech/Project/z3/build/api/ml
 
-all: memory counter
+all: memory fifo counter 
 
 memory:
-	ocamlbuild 'memory.native'
+	ocamlbuild -use-ocamlfind 'memory.native'
 
 counter:
-	ocamlbuild 'counter.native'
+	ocamlbuild -use-ocamlfind 'counter.native'
 
 fifo:
-	ocamlbuild -use-ocamlfind '${OBJ}'
+	ocamlbuild -use-ocamlfind -use-ocamlfind 'fifo.native'
 
 clean:
 	ocamlbuild -clean
