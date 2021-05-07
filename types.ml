@@ -154,3 +154,22 @@ let form_contain_args form args =
 
 let form_not_contain_args form args =
 	not (form_contain_args form args)
+
+let rec form_solve_directly form =
+	match form with
+	| Eqn (e1, e2) ->(
+		match e1, e2 with
+		| (IVar (Ident (str, Int size)), Const (IntC (data, data_size))) -> true
+		| (Const (IntC (data, data_size)), IVar (Ident (str, Int size))) -> true
+		| (IVar (Ident (str, Bool)), Const (BoolC b)) -> true
+		| (Const (BoolC b), IVar (Ident (str, Bool))) -> true
+		| _ -> false
+	)
+	| AndForm(f1, f2) -> (form_solve_directly f1) && (form_solve_directly f2)
+	| Neg f -> form_solve_directly f
+	| OrForm(f1, f2) -> (form_solve_directly f1) && (form_solve_directly f2)
+	| ImplyForm (f1, f2) -> (form_solve_directly f1) && (form_solve_directly f2)
+	| Chaos -> true
+
+let form_not_solve_directly form = 
+	not (form_solve_directly form)

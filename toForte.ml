@@ -296,12 +296,31 @@ let tag2FL tag node_set =
 	let t2f_helper tag node = 
 		let ctx = make_z3_context () in
 		let TAGINV (vars, forms) = tag node in
+		let solveDirect = TFormulaSet.elements (
+							List.fold_right TFormulaSet.add 
+								(List.filter (fun f -> (form_solve_directly f)) forms) TFormulaSet.empty 
+						)
+		in
+		let solveDirectBitForms = List.map (fun f -> termForm2bitForm f) solveDirect in
+		let formsToSolve = TFormulaSet.elements (List.fold_right TFormulaSet.add 
+						(List.filter (fun f -> (not_contain_symbolic_const f) && (form_contain_args f vars)) forms) TFormulaSet.empty 
+					)
+		in 
+		let formsToConcrete = TFormulaSet.elements (List.fold_right TFormulaSet.add 
+						(List.filter (fun f -> ((form_contain_args f vars)&&(form_not_solve_directly f))) forms) TFormulaSet.empty 
+					)
+		in 
 		if ((List.length forms == 1) && ((List.hd forms)=Chaos)) then "[]"
-		else if ((List.length vars) = 0) then "[]"
+		else if ((List.length formsToSolve) = 0) then (
+			let solveDirectTrajForms = List.map (fun form -> bitForm2trajForm form ) solveDirectBitForms in
+			let solveDirectTrajFLForms = List.flatten (List.map (fun traj -> (trajOcaml2trajFL traj)) solveDirectTrajForms) 
+			in 
+			(Printf.sprintf "[[%s]]" (String.concat "," solveDirectTrajFLForms))
+		)
 		else (
-			let concreteList = getAllModels ctx forms vars in
+			let concreteList = getAllModels ctx formsToSolve vars in
 			let concreteBitForms = List.map (fun sublist -> (
-										List.map (fun form -> (tag_inv_to_bit_form form vars sublist)) forms 
+										(List.map (fun form -> (tag_inv_to_bit_form form vars sublist)) formsToConcrete)@solveDirectBitForms
 								)) concreteList 
 			in
 			let concreteTrajForms = List.map ( fun subforms ->
