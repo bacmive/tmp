@@ -44,8 +44,10 @@ let rec caseExpression : formulaExpPair list -> expression = function
   
 let readArray (v : var) (e : expression) : expression =
 	match v,e with 
-	| (Ident (name, Array (length, Bool)), Const (IntC(value, index_size))) -> 
-		caseExpression (List.map (fun i -> (Eqn (e, (Const (IntC (i,index_size)))), IVar (Para (v, Const (IntC (i, index_size)))))) (upt 0 (length-1)))
+	| (Ident (name, Array (length, Bool)), Const (IntC (value, index_size))) -> 
+		IVar (Para (v, e))
+	| (Ident (name, Array (length, Int data_size)), Const (IntC (value, index_size))) -> 
+		IVar (Para (v, e))
 	| (Ident (name, Array (length, Bool)), IVar (Ident (var_name, Int index_size))) ->
 		caseExpression (List.map (fun i -> (Eqn (e, (Const (IntC (i, index_size)))), IVar (Para (v, Const (IntC (i, index_size)))))) (upt 0 (length-1)))
 	| (Ident (name, Array (length, Int data_size)), IVar (Ident (var_name, Int index_size))) ->
@@ -60,7 +62,10 @@ let readArray (v : var) (e : expression) : expression =
 			|_ -> raise (Invalid_argument "In readArray: not supported uninterpreted function parameter")
 		)
 		|_->raise (Invalid_argument "In readArray: not matched argument")
-	)	
+	)
+	| (Ident (name, Array (length, Int data_size)), Const (SymbIntC (str, index_size))) -> (
+        caseExpression (List.map (fun i -> (Eqn (e, (Const (IntC (i, index_size)))), IVar (Para (v, Const (IntC (i, index_size)))))) (upt 0 (length-1)))
+    )	
 	| _ -> raise (Invalid_argument "In readArray: not matched argument")
 
 
@@ -106,21 +111,38 @@ module TFormulaSet = Set.Make(
 )
 
 (**************************************other tools *****************************************)
+let rec contain_vars form =
+	match form with
+	| Eqn (e1, e2) -> (
+		match e1,e2 with
+		| (IVar v, _) -> true
+		| (_, IVar v) -> true
+		| _-> false
+	)
+	| AndForm(f1, f2) -> (contain_vars f1) && (contain_vars f2)
+	| Neg f -> contain_vars f
+	| OrForm(f1, f2) -> (contain_vars f1) && (contain_vars f2)
+	| ImplyForm (f1, f2) -> (contain_vars f1) && (contain_vars f2)
+	| Chaos -> false
+
+let not_contain_vars form =  
+	not (contain_vars form)
+	
 let rec contain_symbolic_const form = 
-		match form with 
-		| Eqn (e1, e2) ->(
-			match e1,e2 with
-			| (Const (SymbBoolC str), _) -> true
-			| (Const (SymbIntC (str, size)), _) -> true
-			| (_, Const (SymbBoolC str)) -> true
-			| (_, Const (SymbIntC (str, size))) -> true
-			| _-> false
-		)
-		| AndForm(f1, f2) -> (contain_symbolic_const f1) && (contain_symbolic_const f2)
-		| Neg f -> contain_symbolic_const f
-		| OrForm(f1, f2) -> (contain_symbolic_const f1) && (contain_symbolic_const f2)
-		| ImplyForm (f1, f2) -> (contain_symbolic_const f1) && (contain_symbolic_const f2)
-		| Chaos -> false
+	match form with 
+	| Eqn (e1, e2) ->(
+		match e1,e2 with
+		| (Const (SymbBoolC str), _) -> true
+		| (Const (SymbIntC (str, size)), _) -> true
+		| (_, Const (SymbBoolC str)) -> true
+		| (_, Const (SymbIntC (str, size))) -> true
+		| _-> false
+	)
+	| AndForm(f1, f2) -> (contain_symbolic_const f1) && (contain_symbolic_const f2)
+	| Neg f -> contain_symbolic_const f
+	| OrForm(f1, f2) -> (contain_symbolic_const f1) && (contain_symbolic_const f2)
+	| ImplyForm (f1, f2) -> (contain_symbolic_const f1) && (contain_symbolic_const f2)
+	| Chaos -> false
 let not_contain_symbolic_const form =
 	not (contain_symbolic_const form)
 

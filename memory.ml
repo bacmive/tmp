@@ -1,11 +1,12 @@
+open Types
 open ToForte
 open Trajectory
 open Tools
 (* memory *)
 
-let data_size = 2
-let addr_size = 2
-let depth = 4
+let data_size = 8
+let addr_size = 10
+let depth = 1024
 
 (** main assertion graph *)
 let vertexI = Vertex 0
@@ -14,18 +15,16 @@ let edgeL = [Edge (vertexI, (Vertex 1)); Edge ((Vertex 1), (Vertex 1)); Edge ((V
 
 (** actions of assertion graph *)
 let wr 		: expression = IVar (Ident ("wr", Bool))
-let re 		: expression = IVar (Ident ("re", Bool))
 let low 	: expression = Const (BoolC false) 
 let high 	: expression = Const (BoolC true)
 let addrIn 	: expression = IVar (Ident ("addr", Int addr_size))
 let dataIn  : expression = IVar (Ident ("din", Int data_size))
 let dataOut : expression = IVar (Ident ("dout", Int data_size))
-let symbolAddrIn : expression = Const (SymbIntC ("addr", addr_size))
-let symbolDataIn : expression = Const (SymbIntC ("din", data_size))
+let symbolAddrIn : expression = Const (SymbIntC ("addrIn", addr_size))
+let symbolDataIn : expression = Const (SymbIntC ("dataIn", data_size))
 
 let write = Eqn (wr, high)
-let read = AndForm (Eqn(wr, low), Eqn (re, high))
-let noWriteRead = AndForm (Eqn (wr, low), Eqn (re, low))
+let read =  Eqn (wr, low)
 
 let writeDataAt d a = AndForm (write, AndForm(Eqn (dataIn, d), Eqn (addrIn, a)))
 let readAt a = AndForm (read, Eqn (addrIn, a))
@@ -36,7 +35,7 @@ let antOfMemory aEdge =
 	let t = nodeToInt (sink aEdge) in
 	(
 		if ((f ==0) && (t ==1)) then writeDataAt symbolDataIn symbolAddrIn
-		else if ((f==1) && (t==1)) then noWriteRead
+		else if ((f==1) && (t==1)) then read
 		else readAt symbolAddrIn
 	)
 
@@ -51,6 +50,13 @@ let consOfMemory aEdge =
 
 let memoryGsteSpec = Graph (vertexI, vertexL, edgeL, antOfMemory, consOfMemory)
 
-let binNodes = []
+let mem = Ident ("mem", Array (depth, (Int data_size)))
+
+let tag (Vertex n)=
+	if (n=0) then TAGINV ([], [Chaos])
+	else if (n=1) then TAGINV([], [Eqn (readArray mem symbolAddrIn, symbolDataIn)]) 
+	else TAGINV([], [Chaos])
+	
 let () =
-	toFL memoryGsteSpec "memory" binNodes
+	toSTEfl "memory" memoryGsteSpec tag
+			

@@ -189,13 +189,12 @@ let bitForm2trajForm form =
 	let rec toIsList f = 
 		match f with
 		| Chaos -> []
-		| Eqn (IVar (Ident (name1, Bool)), IVar (Ident (name2, Bool))) -> []
-		| Eqn (IVar (Ident (name1, Int size1)), IVar (Ident (name2, Int size2))) -> []
+		| Eqn (IVar (Ident (name1, Bool)), IVar (Ident (name2, Bool))) -> [] (**)
+		| Eqn (IVar (Ident (name1, Int size1)), IVar (Ident (name2, Int size2))) -> [] (**)
 		| Eqn (IVar (Ident (name, Bool)), Const (BoolC b)) -> [(if b then Is1 (Tnode name) else Is0 (Tnode name))]
 		| Eqn (IVar (Ident (name, Bool)), Const (SymbBoolC v_str)) -> [isb (EVar (Bvariable v_str)) (Tnode name)]
-		(*| AndForm (Eqn (IVar (Ident (name, Bool)), Const (BoolC b)), nestedForm ) -> (if b then Is1 (Tnode name) else Is0 (Tnode name)) :: (toIsList nestedForm)*)
 		| AndForm (nestedForm1, nestedForm2) -> (toIsList nestedForm1)@(toIsList nestedForm2)
-		| _ -> raise (Failure "In bitForm2trajForm: error ") 
+		| _ -> raise (Failure "In bitForm2trajForm: error, unsupported bitForm format") 
 	in
 	let res = toIsList form in
 	match res with
@@ -240,7 +239,7 @@ let tag_inv_to_bit_form form args concret_list =
 				match f,e11 with
 				| (Eqn (fe1, fe2), IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC (i, index_size))))) -> (
 					match fe1, fe2 with
-					|(Const (IntC(value, index_size1)), Const (IntC (i2, index_size2))) -> (
+					| (Const (IntC (value, index_size1)), Const (IntC (i2, index_size2))) -> (
 						termForm2bitForm (Eqn (IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC (value, index_size1)))),  Const (SymbIntC (c_name, data_size))))
 					)
 					| (IVar (Ident (var_name, Int index_size1)), Const (IntC (i2, index_size2))) when (expr_in_args fe1 args)-> (
@@ -292,16 +291,106 @@ let tag_inv_to_bit_form form args concret_list =
 		)
 		| _-> raise (Invalid_argument "In tag_inv_to_bit_form-> form") 
 
+let handle_mem_special form =
+	match form with
+	| Eqn (e1, e2) -> (
+		match e1, e2 with
+		| (IteForm (f, e11, e12), Const (SymbIntC (c_name, data_size))) -> (
+			match f,e11 with
+			| (Eqn (fe1, fe2), IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC (i, index_size))))) -> (
+				match fe1, fe2 with
+				| (Const (SymbIntC (str, index_size)), Const (IntC (i, index_size1))) -> (
+					let values = upt 0 ((pow 2 index_size)-1) in
+					let actions = List.map (fun v -> 
+									trajOcaml2trajFL (
+										bitForm2trajForm (
+											termForm2bitForm (Eqn (IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC (v, index_size1)))),  Const (SymbIntC (c_name, data_size))))
+										)
+									)
+								) values
+					in
+					let actionsFL = List.map (
+									( fun subFLlist -> Printf.sprintf "TAndList [%s]" (String.concat "," subFLlist))
+								) actions 
+					in
+					let index = List.map (fun i -> EVar (Bvariable (formatMapVIS ~axis1:i str))) (dwt (index_size-1) 0) in
+					let indexIs k size= 
+						let rec dec2Bin k n=
+							if(n=0) then []
+							else (k mod 2) :: (dec2Bin (k/2) (n-1))
+						in 
+						let bins = List.rev (dec2Bin k size) in
+						List.map2 (fun i b -> (if (b=1) then i else (ENeg (i)))) index bins
+					in
+					let cases = List.map (fun k -> indexIs k index_size) values in
+					let guards = List.map (fun case -> 
+											"(" ^ (String.concat " bAND " ( List.map (fun be -> bExpr2FLbExprList be) case )) ^ ")"
+										) cases
+					in
+					let terms = List.map2 (fun g s -> "Guard (" ^ g ^ ") (" ^ s ^ ")") guards actionsFL  in
+					Printf.sprintf "TAndList [\n %s \n]"  (String.concat ",\n" terms)			
+				)
+				| (Const (IntC (i, index_size1)), Const (SymbIntC (str, index_size))) -> (
+					let values = upt 0 ((pow 2 index_size)-1) in
+					let actions = List.map (fun v -> 
+									trajOcaml2trajFL (
+										bitForm2trajForm (
+											termForm2bitForm (Eqn (IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC (v, index_size1)))),  Const (SymbIntC (c_name, data_size))))
+										)
+									)
+								) values
+					in
+					let actionsFL = List.map (
+									( fun subFLlist -> Printf.sprintf "TAndList [%s]" (String.concat "," subFLlist))
+								) actions 
+					in
+					let index = List.map (fun i -> EVar (Bvariable (formatMapVIS ~axis1:i str))) (dwt (index_size-1) 0) in
+					let indexIs k size= 
+						let rec dec2Bin k n=
+							if(n=0) then []
+							else (k mod 2) :: (dec2Bin (k/2) (n-1))
+						in 
+						let bins = List.rev (dec2Bin k size) in
+						List.map2 (fun i b -> (if (b=1) then i else (ENeg (i)))) index bins
+					in
+					let cases = List.map (fun k -> indexIs k index_size) values in
+					let guards = List.map (fun case -> 
+											"(" ^ (String.concat " bAND " ( List.map (fun be -> bExpr2FLbExprList be) case )) ^ ")"
+										) cases
+					in
+					let terms = List.map2 (fun g s -> "Guard (" ^ g ^ ") (" ^ s ^ ")") guards actionsFL  in
+					Printf.sprintf "TAndList [\n %s \n]"  (String.concat ",\n" terms)
+				)
+				| _ -> raise (Invalid_argument "In handle_mem_special->form->e1e2->fe11->fe1fe2")
+			)
+			| _ -> raise (Invalid_argument "In handle_mem_special->form->e1e2->fe11")
+		)
+		| _ -> raise (Invalid_argument "In handle_mem_special->form->e1e2")
+	)
+	| _ -> raise (Invalid_argument "In handle_mem_special: Handle only memory special formula")
+	
 let tag2FL tag node_set = 
 	let t2f_helper tag node = 
 		let ctx = make_z3_context () in
 		let TAGINV (vars, forms) = tag node in
+		(* directly solved *)
 		let solveDirect = TFormulaSet.elements (
 							List.fold_right TFormulaSet.add 
-								(List.filter (fun f -> (form_solve_directly f)) forms) TFormulaSet.empty 
+								(List.filter (fun f -> 
+												(form_solve_directly f)||((contain_symbolic_const f)&&(form_not_contain_args f vars)&&(contain_vars f))) forms
+								) TFormulaSet.empty 
 						)
 		in
 		let solveDirectBitForms = List.map (fun f -> termForm2bitForm f) solveDirect in
+		(*memory special*)
+		let memorySpecial = TFormulaSet.elements (
+							List.fold_right TFormulaSet.add 
+								(List.filter (fun f -> 
+												(form_not_solve_directly f)&&(contain_symbolic_const f)&&(form_not_contain_args f vars) && (not_contain_vars f)) forms
+								) TFormulaSet.empty 
+						)
+		in
+		(* SMT solved *)
 		let formsToSolve = TFormulaSet.elements (List.fold_right TFormulaSet.add 
 						(List.filter (fun f -> (not_contain_symbolic_const f) && (form_contain_args f vars)) forms) TFormulaSet.empty 
 					)
@@ -310,7 +399,14 @@ let tag2FL tag node_set =
 						(List.filter (fun f -> ((form_contain_args f vars)&&(form_not_solve_directly f))) forms) TFormulaSet.empty 
 					)
 		in 
-		if ((List.length forms == 1) && ((List.hd forms)=Chaos)) then "[]"
+		if(vars = [] &&  ((List.length memorySpecial)!= 0)) then (
+			(* special case: only one element in the list memorySpecial*)
+			(* otherwise, must consider Cartesian product *)
+			let fls = List.map (fun f -> handle_mem_special f) memorySpecial in
+			(Printf.sprintf "[[%s]]" (String.concat "," fls))	
+		)
+		else if(forms = []) then "[[]]"
+		else if ((List.length forms == 1) && ((List.hd forms)=Chaos)) then "[[]]"
 		else if ((List.length formsToSolve) = 0) then (
 			let solveDirectTrajForms = List.map (fun form -> bitForm2trajForm form ) solveDirectBitForms in
 			let solveDirectTrajFLForms = List.flatten (List.map (fun traj -> (trajOcaml2trajFL traj)) solveDirectTrajForms) 
@@ -359,12 +455,59 @@ let tag aVert=
 ;
 "
 body
+		(*
+		if ((List.length forms == 1) && ((List.hd forms)=Chaos)) then "[]"
+		else if ((List.length vars) = 0) then "[]"
+		else (
+			let concreteList = getAllModels ctx forms vars in
+			let concreteBitForms = List.map (fun sublist -> (
+										List.map (fun form -> (tag_inv_to_bit_form form vars sublist)) forms 
+								)) concreteList 
+			in
+			let concreteTrajForms = List.map ( fun subforms ->
+										List.map (fun form -> bitForm2trajForm form ) subforms 
+									) concreteBitForms
+			in
+			let concreteTrajFLForms = List.map (fun subtrajs -> (
+										List.flatten (List.map (fun traj -> (trajOcaml2trajFL traj)) subtrajs)
+								)) concreteTrajForms
+			in
+			let flattenOneD = List.map (
+									( fun subFLlist -> Printf.sprintf "[%s]" (String.concat "," subFLlist))
+								) concreteTrajFLForms
+			in 
+			(Printf.sprintf "[%s]" (String.concat "," flattenOneD))
+			(*
+			let concreteTrajFLForms = List.map (fun subtrajs -> (
+										List.flatten (List.map (fun traj -> (trajOcaml2trajFL traj)) subtrajs)
+								)) concreteTrajForms
+			in
+			List.iter (fun subtrajs -> (
+				List.iter (fun traj -> Printf.printf "%s " traj) subtrajs;
+				print_endline ""
+			))concreteTrajFLForms
+			*)
+		)
+	in
+	let tag_set = List.map (fun (Vertex i) -> Printf.sprintf "(n = %d) => %s" i (t2f_helper tag (Vertex i))) node_set in
+	let body = String.concat "\n    |" tag_set in
+	Printf.sprintf 
+"	
+let tag aVert=
+    val (Vertex n) = aVert in
+    %s 
+    | error \"no such node\"
+;
+"
+body
+
+*)
 
 (*********************************** to forte input file *******************************************)
 
 (** gsteSpec to forte verification program using STE with tag invariant *)
 let toSTEfl model_name gs tag=
-	let oc = open_out (Printf.sprintf "%s.fl" model_name) in
+	let oc = open_out (Printf.sprintf "%s_toforte.fl" model_name) in
 	let main_assertion_graph init_node node_set edge_set =
 		match init_node with (Vertex inum) -> Printf.fprintf oc "let vertexI = Vertex %d;\n" inum ;
 		Printf.fprintf oc "%s" ("let vertexL = [" ^ (String.concat "," (List.map (fun (Vertex i) -> Printf.sprintf "Vertex %d" i) node_set)) ^ "];\n" );
