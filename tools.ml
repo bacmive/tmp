@@ -12,3 +12,9 @@ let rec upt (f : int) (t : int) : int list =
 let rec dwt (t : int) (f : int) : int list =
 	if f > t then []
 	else t :: (dwt (t-1) f) 
+
+(** power function *)	
+let rec pow x n = 
+	if n=0 then 1 
+	else if n=1 then x
+	else x * (pow x (n-1)) 

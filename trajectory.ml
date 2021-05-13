@@ -9,7 +9,7 @@ type bExpr =
 
 let rec bExpr2FLbExprList be =
 	match be with
-	| EVar (Bvariable name)-> Printf.sprintf "bvariable \"%s\"" name
+	| EVar (Bvariable name)-> Printf.sprintf "(bvariable \"%s\")" name
 	| EAnd (be1, be2) -> "(" ^ (bExpr2FLbExprList be1)^ "bAND" ^(bExpr2FLbExprList be2)^ ")"
 	| EOr (be1, be2) -> "(" ^ (bExpr2FLbExprList be1)^ "bOR" ^(bExpr2FLbExprList be2) ^ ")"
 	| ENeg be0 -> "(bNOT (" ^ (bExpr2FLbExprList be0) ^"))"

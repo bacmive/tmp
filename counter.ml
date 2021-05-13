@@ -1,4 +1,5 @@
-open B_types
+open Types
+open ToForte
 open Trajectory
 open Tools
 
@@ -42,56 +43,13 @@ let counterGsteSpec = Graph (vertexI , vertexL,  edgeL, antOfCounter, consOfCoun
 
 
 (********************************* gste tag invariant ******************************)
-let last_var = IVar (Ident ("last", Int 2))
+let last_var : expression  = IVar (Ident ("last", Int data_size))
 
 let tag (Vertex n) = 
-	if n = 0 then Chaos
-	else Eqn (last_var, Const( IntC ((n-1), data_size)))
+	if n = 0 then TAGINV ([], [Chaos])
+	else TAGINV ([], [Eqn (last_var, Const( IntC ((n-1), data_size)))])
 	
-
-
-(********************************* ocaml term-level AG to ocaml boolean-level AG ******************************)
-let antOfCounter_bool e = 
-	termForm2bitForm (antOfCounter e)
-
-let consOfCounter_bool e =
-	termForm2bitForm (consOfCounter e)
-
-let tag_bool n =
-	termForm2bitForm (tag n)
-
-
-(************************************** transform ocaml AG to forte AG(defined in trajectory.ml) *****************************************)	
-let pprint () = 
-	List.iter (
-				fun e -> (
-					let f = nodeToInt (source e) in
-					let t = nodeToInt (sink e) in
-					Printf.printf "Edge (%d, %d)'s boolean antecedent is: %s\n"  f t (bitForm2str (antOfCounter_bool e));
-					Printf.printf "Edge (%d, %d)'s boolean consequent is: %s\n\n"  f t (bitForm2str (consOfCounter_bool e))
-				)
-			) edgeL;
-			print_endline "";
-	List.iter (
-				fun e -> (
-					let f = nodeToInt (source e) in
-					let t = nodeToInt (sink e) in
-					Printf.printf "Edge (%d, %d)'s boolean forte antecedent is: %s\n"  f t (trajForm2str (bitForm2trajForm (antOfCounter_bool e)));
-					Printf.printf "Edge (%d, %d)'s boolean forte consequent is: %s\n\n"  f t (trajForm2str (bitForm2trajForm (consOfCounter_bool e)))
-				)
-			) edgeL;
-			print_endline "";
-	List.iter (
-				fun (Vertex i) -> Printf.printf "Node %d's boolean tag invariant is: %s\n" i (bitForm2str (tag_bool(Vertex i)))
-			) vertexL;
-			print_endline "";
-	List.iter (
-				fun (Vertex i) -> Printf.printf "Node %d's boolean forte tag invariant is: %s\n" i (trajForm2str (bitForm2trajForm (tag_bool(Vertex i))))
-			) vertexL
-
-(** transform gsteSpec to forte file *)
-
-let binNodes = []
-
-let () = 
-	toFL counterGsteSpec "counter" binNodes
+(***********************************************************************************)
+let () =
+	toSTEfl "counter_new" counterGsteSpec tag
+	

@@ -172,10 +172,7 @@ let get_all_models (ctx: Z3.context) (expr: Expr.expr) (args_of_expr:Expr.expr l
 	@return a list of list int for concretization
 *)
 let getAllModels ctx (tagForms : formula list) (args : expression list) =
-	let forms_to_solve = List.fold_right TFormulaSet.add 
-						(List.filter (fun f -> (not_contain_symbolic_const f) && (form_contain_args f args)) tagForms) TFormulaSet.empty 
-	in
-	let expr_to_solve = and_all_exprs ctx (List.map (fun f -> form2z3Expr ctx f) (TFormulaSet.elements forms_to_solve)) in
+	let expr_to_solve = and_all_exprs ctx (List.map (fun f -> form2z3Expr ctx f) tagForms ) in
 	let args_to_solve = List.map ( fun e -> expr2z3Expr ctx e ) args in
 	let concretization = get_all_models ctx expr_to_solve args_to_solve in
 	concretization
