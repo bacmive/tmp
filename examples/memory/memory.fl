@@ -1,0 +1,32 @@
+
+let ckt = load_exe "memory.exe";
+load "gsteSymReduce.fl";
+loadModel ckt;
+let vertexI = Vertex 0;
+let vertexL = [Vertex 0,Vertex 1,Vertex 2];
+let edgeL = [Edge (Vertex 0) (Vertex 1),Edge (Vertex 1) (Vertex 1),Edge (Vertex 1) (Vertex 2)];
+let ant aEdge = 
+	val (Edge (Vertex from) (Vertex to)) = aEdge
+	in 
+	((from = 0) AND (to = 1)) => TAndList [Is1 "wr0",Guard (bvariable "din<1>0") (Is1 "din<1>0"),Guard ((bNOT (bvariable "din<1>0"))) (Is0 "din<1>0"),Guard (bvariable "din<0>0") (Is1 "din<0>0"),Guard ((bNOT (bvariable "din<0>0"))) (Is0 "din<0>0"),Guard (bvariable "addr<1>0") (Is1 "addr<1>0"),Guard ((bNOT (bvariable "addr<1>0"))) (Is0 "addr<1>0"),Guard (bvariable "addr<0>0") (Is1 "addr<0>0"),Guard ((bNOT (bvariable "addr<0>0"))) (Is0 "addr<0>0"),Is0 "CLK",Next (Is1 "CLK")] 
+	| ((from = 1) AND (to = 1)) => TAndList [Is0 "wr0",Is0 "re0",Is0 "CLK",Next (Is1 "CLK")] 
+	| ((from = 1) AND (to = 2)) => TAndList [Is0 "wr0",Is1 "re0",Guard (bvariable "addr<1>0") (Is1 "addr<1>0"),Guard ((bNOT (bvariable "addr<1>0"))) (Is0 "addr<1>0"),Guard (bvariable "addr<0>0") (Is1 "addr<0>0"),Guard ((bNOT (bvariable "addr<0>0"))) (Is0 "addr<0>0"),Is0 "CLK",Next (Is1 "CLK")] 
+	| error "In cons: missing case"
+;
+
+let cons aEdge = 
+	val (Edge (Vertex from) (Vertex to)) = aEdge
+	in 
+	((from = 0) AND (to = 1)) => TAndList [] 
+	| ((from = 1) AND (to = 1)) => TAndList [] 
+	| ((from = 1) AND (to = 2)) => TAndList [Guard (bvariable "din<1>0") (Is1 "dout<1>0"),Guard ((bNOT (bvariable "din<1>0"))) (Is0 "dout<1>0"),Guard (bvariable "din<0>0") (Is1 "dout<0>0"),Guard ((bNOT (bvariable "din<0>0"))) (Is0 "dout<0>0")] 
+	| error "In cons: missing case"
+;
+
+
+let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
+let binNodes = [];
+lemma "lemmaTMain" mainGoal;
+	by (gsteSymbSim binNodes);
+done 0;
+quit;

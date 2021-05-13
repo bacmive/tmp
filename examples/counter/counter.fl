@@ -1,62 +1,24 @@
-load "lib.fl";
-lettype trajForm = Is1 string
-                | Is0 string
-               	| Next trajForm
-                | Guard bexpr trajForm
-                | TAndList (trajForm list)
-        	    | Chaos
-;
-
-let Isb P str = TAndList [(Guard P (Is1 str)), (Guard (bNOT P) (Is0 str))]; //Isb value node
-
-lettype vertex = Vertex int;
-lettype edge = Edge vertex vertex;
-lettype edge2Form = Edge2Form (edge->trajForm);
-
-lettype assertion = TImply trajForm trajForm //antecedent => consequent
-;		
-	
-//-------------------------------------------------------------------------------//
-//节点在时刻time的节点名
-let nodeAt     name  time = (name ^ "@" ^ (int2str time));
-//节点在时刻time的变量名
-let bvariableAt node time = bvariable (nodeAt node time);
-
-//在某个时刻的条件
-letrec propAt P 0=P
-  /\   propAt P N=Next ( propAt P (N - 1));
-
-//从start时刻到END时刻，条件prop一直保持
-letrec fromTo Prop Start END =
-   (Start+1 =END) => TAndList [propAt Prop Start]
-  | TAndList [ (propAt Prop Start), (fromTo Prop (Start + 1) END )];
-  
-//从时刻start起重复动作P times次
-let repeatDoCycles P start times = TAndList (map P (start upto (start+times-1)));
+//load "lib.fl";
 
 //-------------------------------------------------------------------------------//
 let ckt = load_exe "counter.exe";
+load "gsteSymReduce.fl";
+loadModel ckt;
+
+//structure parametres
 let DLEN = 2;
 let last = 3;
 
-let rst0_2 = fromTo (Is1 "rst0") 0 2;
-let rst2_4 = fromTo (Is0 "rst0") 2 4;
-let rst4_6 = fromTo (Is0 "rst0") 4 6;
-let rst6_8 = fromTo (Is0 "rst0") 6 8;
-let rst8_10 = fromTo (Is0 "rst0") 8 10;
-//let antOnrst = TAndList [rst0_2, rst2_4, rst4_6, rst6_8, rst8_10];
+//-------------------------------------------------------------------------------//
 
-let clk0_2 = TAndList [(fromTo (Is0 "CLK") 0 1),(fromTo (Is1 "CLK") 1 2)];
-let clk2_4 = TAndList [(fromTo (Is0 "CLK") 2 3),(fromTo (Is1 "CLK") 3 4)];
-let clk4_6 = TAndList [(fromTo (Is0 "CLK") 4 5),(fromTo (Is1 "CLK") 5 6)];
-let clk6_8 = TAndList [(fromTo (Is0 "CLK") 6 7),(fromTo (Is1 "CLK") 7 8)];
-let clk8_10 = TAndList [(fromTo (Is0 "CLK") 8 9),(fromTo (Is1 "CLK") 9 10)];
-//let antOnClk = TAndList [clk0_2, clk2_4, clk4_6, clk6_8, clk8_10];
-
-let dout0 = fromTo (TAndList [ Is0 "dout<1>0", Is0 "dout<0>0"]) 3 4;
-let dout1 = fromTo (TAndList [ Is0 "dout<1>0", Is1 "dout<0>0"]) 5 6;
-let dout2 = fromTo (TAndList [ Is1 "dout<1>0", Is0 "dout<0>0"]) 7 8;
-let dout3 = fromTo (TAndList [ Is1 "dout<1>0", Is1 "dout<0>0"]) 9 10;
+//actions of assertion graph
+let myclk = TAndList [Is0 "CLK",Next (Is1 "CLK")];
+let rst = TAndList [Is1 "rst0", myclk];
+let nrst = TAndList [Is0 "rst0", myclk];
+let dout0 = TAndList [ Is0 "dout<1>0", Is0 "dout<0>0"];
+let dout1 = TAndList [ Is0 "dout<1>0", Is1 "dout<0>0"]; 
+let dout2 = TAndList [ Is1 "dout<1>0", Is0 "dout<0>0"]; 
+let dout3 = TAndList [ Is1 "dout<1>0", Is1 "dout<0>0"];
 
 //main assertion graph
 let vertexI = Vertex 0;
@@ -69,11 +31,11 @@ let edgeL = [Edge vertexI (Vertex 1)]
 let ant aEdge =
 	val (Edge (Vertex from) (Vertex to)) = aEdge
 	in
-	( (from = 0) AND (to = 1) ) => TAndList [rst0_2, clk0_2]
-	| ( (from = 1) AND (to = 2) ) => TAndList [rst2_4, clk2_4]
-		| ( (from = 2) AND (to = 3) )  => TAndList [rst4_6, rst4_6]
-			| ( (from = 3) AND (to = 4) ) => TAndList [rst6_8, clk6_8]
-				| TAndList [rst8_10, clk8_10]
+	( (from = 0) AND (to = 1) ) => rst
+	| ( (from = 1) AND (to = 2) ) => nrst
+		| ( (from = 2) AND (to = 3) )  => nrst
+			| ( (from = 3) AND (to = 4) ) => nrst
+				| nrst
 ;
 
 let cons aEdge = 
@@ -86,65 +48,10 @@ let cons aEdge =
 				| dout3
 ;
 
-// run STE 
-
-//turn the trajectory form to five tuple list accepted by STE
-letrec 	trajForm2FiveTuples (Is1 n) = [(T,n,T,0,1)]
-	/\ 	trajForm2FiveTuples (Is0 n) = [(T,n,F,0,1)]
-	/\ 	trajForm2FiveTuples (TAndList TLs) = flat (map trajForm2FiveTuples TLs)
-	/\ 	trajForm2FiveTuples (Next TF) = 
-			let tfs1 = trajForm2FiveTuples TF 
-			in
-			map (\tuple. val (g,n,v,s,e) = tuple in (g,n,v,s+1,e+1)) tfs1
-	/\ 	trajForm2FiveTuples (Guard P f) =
-    		let tfs1 = trajForm2FiveTuples f 
-			in	val ([g']) = bexpr2bdd [] [P] 
-			in	map  (\tuple. val (g,n,v,s,e) = tuple in ((g AND g'),n,v,s,e)) tfs1
-;
-
-let trajFiveTuple2Str FiveTuples = itlist (\(g, n, v, f, t). \str. (sprintf "(%s, %s, %s, %d, %d) " ((bool2str 10 g), n, (bool2str 10 v), f, t))^str)
-                                    FiveTuples ""
-;
-
-let steOnEdge e =
-    val (Edge (Vertex f) (Vertex t)) = e in
-	let ant_e = ant e 
-	in	let cons_e = cons e
-	in  let ant_ste = trajForm2FiveTuples ant_e
-	in	let cons_ste = trajForm2FiveTuples cons_e
-	then 
-	(STE "-w -y -S" ckt [] ant_ste cons_ste [] ) => fprintf stdout "Check Result of Edge(%d, %d): success!\n" (f, t) 
-	| error "Sry, STE fails!"
-;
-
-//print tuples
-let print_both_trajs e =
-	let ant_ste = trajForm2FiveTuples (ant e) in
-	let con_ste = trajForm2FiveTuples (cons e) in
-    val (Edge (Vertex f) (Vertex t)) = e in
-    fprintf stdout "the antecedent of Edge(%d, %d) is: " (f, t)
-    fseq
-	print (trajFiveTuple2Str ant_ste)
-	fseq
-	print "\n" 
-    fseq
-    fprintf stdout "the consequent of Edge(%d, %d) is: " (f, t)
-	fseq 
-	print (trajFiveTuple2Str con_ste)
-	fseq
-	print "\n\n"
-;
-//foreach [e | edgeL] . (print_both_trajs e);
-
-
-//check 
-foreach [e | edgeL]. (steOnEdge e);
-
-// print FiveTuples
-// lettype five_tuples = 
-// let trajFiveTuple2Str FiveTuples =
-//     	itlist (\(When,Node,Value,From,To). \PrintString.
-//           	(sprintf "(%s,%s,%s,%d,%d) " ((bool2str 10 When),Node,(bool2str 10 Value),From,To)) ^ PrintString)
-//           FiveTuples ""
-// install_print_function trajFiveTuple2Str ;
+//call gste symbolic simulation
+let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
+let binNodes = [];
+lemma "lemmaTMain" mainGoal;
+	by (gsteSymbSim binNodes);
+done 0;
 quit;
