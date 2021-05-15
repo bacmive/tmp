@@ -405,7 +405,8 @@ let tag2FL tag node_set =
 		else (
 			let concreteList = getAllModels ctx formsToSolve vars in
 			let () = List.iter (fun sublist -> (
-				(List.iter (fun i -> Printf.printf "%d " i) sublist)
+				(List.iter (fun i -> Printf.printf "%d " i) sublist);
+				print_endline ""
 			)) concreteList
 			in
 			let concreteBitForms = List.map (fun sublist -> (
