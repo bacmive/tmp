@@ -41,17 +41,5 @@ let consOfCounter e =
 
 let counterGsteSpec = Graph (vertexI , vertexL,  edgeL, antOfCounter, consOfCounter)
 
-
-(********************************* gste tag invariant ******************************)
-let last_var : expression  = IVar (Ident ("last", Int data_size))
-
-let tag (Vertex n) = 
-	if n = 0 then TAGINV ([], [Chaos])
-	else TAGINV ([], [Eqn (last_var, Const( IntC ((n-1), data_size)))])
-	
-(***********************************************************************************)
-let t () =
-	toSTEfl "counter" counterGsteSpec tag
-
 let () =
 	toFL counterGsteSpec "counter" [] 
