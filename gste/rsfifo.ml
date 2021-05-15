@@ -86,4 +86,4 @@ let tail = IVar (Ident ("tail", Int index_size))
 let binNodes = [head; tail]
 
 let () =
-	toFL "rsfifo" rsfifoGsteSpec binNodes
+	toFL rsfifoGsteSpec "rsfifo" binNodes

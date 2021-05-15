@@ -51,5 +51,5 @@ let consOfMemory aEdge =
 let memoryGsteSpec = Graph (vertexI, vertexL, edgeL, antOfMemory, consOfMemory)
 	
 let () =
-	toFL "memory" memoryGsteSpec []
+	toFL memoryGsteSpec "memory" []
 			
