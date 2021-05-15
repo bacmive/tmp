@@ -305,8 +305,7 @@ let toFL gs model_name binNodes=
 	in
 	match gs with Graph (init_node , node_set, edge_set, ants, cons) -> (
 		Printf.fprintf out_channel 
-"
-let ckt = load_exe \"%s.exe\";
+"let ckt = load_exe \"%s.exe\";
 load \"gsteSymReduce.fl\";
 loadModel ckt;
 " model_name;
