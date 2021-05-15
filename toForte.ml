@@ -399,14 +399,14 @@ let tag2FL tag node_set =
 						(List.filter (fun f -> ((form_contain_args f vars)&&(form_not_solve_directly f))) forms) TFormulaSet.empty 
 					)
 		in 
-		if(vars = [] &&  ((List.length memorySpecial)!= 0)) then (
+		if(forms = []) then "[[]]"
+		else if ((List.length forms == 1) && ((List.hd forms)=Chaos)) then "[[]]"
+		else if(vars = [] &&  ((List.length memorySpecial)!= 0)) then (
 			(* special case: only one element in the list memorySpecial*)
 			(* otherwise, must consider Cartesian product *)
 			let fls = List.map (fun f -> handle_mem_special f) memorySpecial in
 			(Printf.sprintf "[[%s]]" (String.concat "," fls))	
 		)
-		else if(forms = []) then "[[]]"
-		else if ((List.length forms == 1) && ((List.hd forms)=Chaos)) then "[[]]"
 		else if ((List.length formsToSolve) = 0) then (
 			let solveDirectTrajForms = List.map (fun form -> bitForm2trajForm form ) solveDirectBitForms in
 			let solveDirectTrajFLForms = List.flatten (List.map (fun traj -> (trajOcaml2trajFL traj)) solveDirectTrajForms) 

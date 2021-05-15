@@ -51,5 +51,5 @@ let tag (Vertex n) =
 	
 (***********************************************************************************)
 let () =
-	toSTEfl "counter_new" counterGsteSpec tag
+	toSTEfl "counter" counterGsteSpec tag
 	
