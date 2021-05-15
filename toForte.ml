@@ -225,13 +225,14 @@ let tag_inv_to_bit_form form args concret_list =
 		| Eqn (e1, e2) -> (
 			match e1,e2 with
 			| (IteForm (f, e11, e12), Const (SymbIntC (c_name, data_size))) -> (
-				match f,e11 with
+				match f, e11 with
 				| (Eqn (fe1, fe2), IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC (i, index_size))))) -> (
 					match fe1, fe2 with
 					| (Const (IntC (value, index_size1)), Const (IntC (i2, index_size2))) -> (
 						termForm2bitForm (Eqn (IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC (value, index_size1)))),  Const (SymbIntC (c_name, data_size))))
 					)
 					| (IVar (Ident (var_name, Int index_size1)), Const (IntC (i2, index_size2))) when (expr_in_args fe1 args)-> (
+						let () = Printf.printf "Hashtbl.find hash fe1: %d\n" (Hashtbl.find hash fe1) in
 						termForm2bitForm (Eqn (IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC ((Hashtbl.find hash fe1), index_size1)))), Const (SymbIntC (c_name, data_size))))
 					)
 					| (Uif (op_str, opex1::opex2::[]), Const (IntC (i2, index_size2))) when ((expr_in_args opex1 args)|| (expr_in_args opex2 args)) ->(
