@@ -113,7 +113,37 @@ let bv2int bv=
 				(upt 2 ((String.length str_bv)-1)) 
 	in
 	List.fold_left (fun a b -> (2*a + b)) 0 intarr
-	
+
+let vec2int bv =
+    let isDigit c =
+         (Char.compare c '0')>=0 && (Char.compare c '9') <= 0
+    in
+    let isAlpha c =
+        (Char.compare c 'a')>=0 && (Char.compare c 'z') <=0
+    in
+    let bv2int str_bv=
+        let intarr = List.map
+                (fun i -> ((Char.code (String.get str_bv i)) - (Char.code '0')))
+                (upt 2 ((String.length str_bv)-1))
+        in
+        List.fold_left (fun a b -> (2*a + b)) 0 intarr
+    in
+    let hv2int str_hv =
+        let  intarr = List.map (
+            fun c -> (
+                if (isDigit c) then (Char.code c) - (Char.code '0')
+                else if (isAlpha c) then (Char.code c) - (Char.code 'a') + 10
+                else raise (Failure "In z3Utils bv2int: unknown character")
+            )
+        ) (List.map (fun i -> String.get str_hv i) (upt 2 ((String.length str_hv)-1)))
+        in
+        List.fold_left (fun a b -> (16*a + b)) 0  intarr
+    in
+    let str_bv = Expr.to_string bv in
+    if (String.get str_bv 1)=='b' then (bv2int str_bv)
+    else if (String.get str_bv 1)=='x' then (hv2int str_bv)
+    else raise (Failure " In z3Utils toint: unknown error")
+
 
 (** 
 	@param 1 Z3 context
@@ -139,7 +169,7 @@ let get_all_models (ctx: Z3.context) (expr: Expr.expr) (args_of_expr:Expr.expr l
 			in
 			let one_model = List.map (fun a -> ( 
 												match Model.eval model a true with
-												| Some av -> bv2int av
+												| Some av -> vec2int av
 												| None -> raise InvalidExpression
 											) 
 									) args_of_expr
