@@ -1,1 +1,1 @@
-true : package(z3), thread, debug
+true : thread, debug
