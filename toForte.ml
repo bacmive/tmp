@@ -232,7 +232,6 @@ let tag_inv_to_bit_form form args concret_list =
 						termForm2bitForm (Eqn (IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC (value, index_size1)))),  Const (SymbIntC (c_name, data_size))))
 					)
 					| (IVar (Ident (var_name, Int index_size1)), Const (IntC (i2, index_size2))) when (expr_in_args fe1 args)-> (
-						let () = Printf.printf "Hashtbl.find hash fe1: %d\n" (Hashtbl.find hash fe1) in
 						termForm2bitForm (Eqn (IVar (Para (Ident (arrname, Array (len, sort)), Const (IntC ((Hashtbl.find hash fe1), index_size1)))), Const (SymbIntC (c_name, data_size))))
 					)
 					| (Uif (op_str, opex1::opex2::[]), Const (IntC (i2, index_size2))) when ((expr_in_args opex1 args)|| (expr_in_args opex2 args)) ->(
@@ -405,6 +404,10 @@ let tag2FL tag node_set =
 		)
 		else (
 			let concreteList = getAllModels ctx formsToSolve vars in
+			let () = List.iter (fun sublist -> (
+				(List.iter (fun i -> Printf.printf "%d " i) sublist)
+			)) concreteList
+			in
 			let concreteBitForms = List.map (fun sublist -> (
 										(List.map (fun form -> (tag_inv_to_bit_form form vars sublist)) formsToConcrete)@solveDirectBitForms
 								)) concreteList 
