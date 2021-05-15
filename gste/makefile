@@ -5,7 +5,7 @@
 .PHONY: clean
 
 rbfifo:
-	ocamlbuild -use-ocamlfind 'fifo.native'
+	ocamlbuild -use-ocamlfind 'rbfifo.native'
 
 rsfifo:
 	ocamlbuild -use-ocamlfind 'rsfifo.native'
