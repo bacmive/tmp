@@ -224,10 +224,11 @@ let rec trajOcaml2trajFL trajf =
 
 (** gsteSpec to forte input AG *)
 let toFL gs model_name binNodes=   
+	let out_channel = open_out (Printf.sprintf "%s_gste.fl" model_name) in
 	let main_assertion_graph init_node node_set edge_set =
-		match init_node with (Vertex inum) -> Printf.fprintf stdout "let vertexI = Vertex %d;\n" inum ;
-		Printf.fprintf stdout "%s" ("let vertexL = [" ^ (String.concat "," (List.map (fun (Vertex i) -> Printf.sprintf "Vertex %d" i) node_set)) ^ "];\n" );
-		Printf.fprintf stdout "%s" ("let edgeL = [" ^ (String.concat "," (List.map (fun (Edge ((Vertex f),(Vertex t))) -> Printf.sprintf "Edge (Vertex %d) (Vertex %d)" f t) edge_set)) ^ "];\n");
+		match init_node with (Vertex inum) -> Printf.fprintf out_channel "let vertexI = Vertex %d;\n" inum ;
+		Printf.fprintf out_channel "%s" ("let vertexL = [" ^ (String.concat "," (List.map (fun (Vertex i) -> Printf.sprintf "Vertex %d" i) node_set)) ^ "];\n" );
+		Printf.fprintf out_channel "%s" ("let edgeL = [" ^ (String.concat "," (List.map (fun (Edge ((Vertex f),(Vertex t))) -> Printf.sprintf "Edge (Vertex %d) (Vertex %d)" f t) edge_set)) ^ "];\n");
 	in
 	let ant_function init_node node_set edge_set ants =
 		let ants_traj e = 
@@ -241,7 +242,7 @@ let toFL gs model_name binNodes=
 			in
 			add_myclk (trajOcaml2trajFL traj_f)
 		in
-		Printf.fprintf stdout "%s" (
+		Printf.fprintf out_channel "%s" (
 "let ant aEdge = 
 	val (Edge (Vertex from) (Vertex to)) = aEdge
 	in 
@@ -270,7 +271,7 @@ let toFL gs model_name binNodes=
 			in
 			add_tandlist (trajOcaml2trajFL traj_f)
 		in 
-		Printf.fprintf stdout "%s" (
+		Printf.fprintf out_channel "%s" (
 "let cons aEdge = 
 	val (Edge (Vertex from) (Vertex to)) = aEdge
 	in 
@@ -303,7 +304,7 @@ let toFL gs model_name binNodes=
 		)
 	in
 	match gs with Graph (init_node , node_set, edge_set, ants, cons) -> (
-		Printf.fprintf stdout 
+		Printf.fprintf out_channel 
 "
 let ckt = load_exe \"%s.exe\";
 load \"gsteSymReduce.fl\";
@@ -312,7 +313,7 @@ loadModel ckt;
 		main_assertion_graph init_node node_set edge_set;
 		ant_function init_node node_set edge_set ants;
 		cons_function init_node node_set edge_set cons ;
-		Printf.fprintf stdout
+		Printf.fprintf out_channel
 "
 let mainGoal = Goal [] (TGraph (Graph vertexL vertexI edgeL (Edge2Form ant) (Edge2Form cons)));
 let binNodes = %s;
@@ -321,4 +322,5 @@ lemma \"lemmaTMain\" mainGoal;
 done 0;
 quit;
 "  (binNodesPart binNodes)
-	)
+	);
+	close_out out_channel
