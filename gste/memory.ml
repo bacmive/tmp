@@ -49,14 +49,7 @@ let consOfMemory aEdge =
 	)
 
 let memoryGsteSpec = Graph (vertexI, vertexL, edgeL, antOfMemory, consOfMemory)
-
-let mem = Ident ("mem", Array (depth, (Int data_size)))
-
-let tag (Vertex n)=
-	if (n=0) then TAGINV ([], [Chaos])
-	else if (n=1) then TAGINV([], [Eqn (readArray mem symbolAddrIn, symbolDataIn)]) 
-	else TAGINV([], [Chaos])
 	
 let () =
-	toSTEfl "memory" memoryGsteSpec tag
+	toFL "memory" memoryGsteSpec []
 			

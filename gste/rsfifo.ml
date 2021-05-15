@@ -82,21 +82,7 @@ let consOfRbFIFO aEdge =
 
 let rsfifoGsteSpec = Graph (vertexI, vertexL, edgeL, antOfRbFIFO, consOfRbFIFO)
 
-let tag (Vertex n) =
-	if (n==0) then TAGINV ([], [Chaos])
-	else if ((n mod 2)==1) then (
-		if (n==1) then TAGINV ([head; tail],  [Eqn (tail, Const (IntC (0, index_size))); emptyFormula])
-		else (
-			let i = (n/2 -1) in
-			TAGINV ([head; tail], [Eqn (tail, Const (IntC (i, index_size))); noEmptyFormula])
-		)
-	)else(
-		if(n==2) then TAGINV([], [Chaos])
-		else (
-			let i = (n/2-2) in
-			TAGINV ([head; tail], [Eqn (tail, Const (IntC (i, index_size))); noEmptyFormula; Eqn (readArray mem (Const (IntC (0, index_size))), symbolDataIn)]) 
-		)
-	)
+let binNodes = [head; tail]
 
 let () =
-	toSTEfl "rsfifo" rsfifoGsteSpec tag
+	toFL "rsfifo" rsfifoGsteSpec binNodes
