@@ -81,9 +81,8 @@ let consOfRbFIFO aEdge =
 
 let rsfifoGsteSpec = Graph (vertexI, vertexL, edgeL, antOfRbFIFO, consOfRbFIFO)
 
-let head = IVar (Ident ("head", Int index_size))
 let tail = IVar (Ident ("tail", Int index_size))
-let binNodes = [head; tail]
+let binNodes = [tail]
 
 let () =
 	toFL rsfifoGsteSpec "rsfifo" binNodes
