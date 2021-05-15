@@ -28,8 +28,8 @@ and formula =
   | Chaos
 
 (** a piece of shortcuts*)
-let number data_value data_size= 
-	Const (IntC (data_value, data_size))
+let number value size= 
+	Const (IntC (value, size))
 
 let plus expr1 expr2 =
 	Uif ("+", [expr1; expr2])

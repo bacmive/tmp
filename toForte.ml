@@ -22,27 +22,16 @@ let formatMapYosys ?axis1:(a1=(-1)) ?axis2:(a2=(-1)) (name : string) =
 let termScalar2bitVecConst (c : scalar) : scalar list =
   match c with
     | IntC (i_value, i_size) -> ( 
-      let helper = function
-        | 1 -> BoolC true
-        | 0 -> BoolC false
-        | _  -> raise (Failure "how")
-            in
-      let decToBin x =
-        let rec d2b y lst = 
-        match y with 
-        |0 -> lst
-        |_ -> d2b (y/2) ((helper (y mod 2))::lst)
-        in
-        d2b x [] 
-      in
-      let intToBinVec value size =
-        let res = Array.make size (BoolC false) in
-        let bin = List.rev (decToBin value) in 
-        let indexes = upt 0 (List.length bin-1) in 
-        List.iter (fun (v, i) -> Array.set res (size-1-i) v) (List.combine bin indexes);
-        Array.to_list res
-      in 
-      intToBinVec i_value i_size
+		let helper = function
+			| 1 -> BoolC true
+			| 0 -> BoolC false
+			| _  -> raise (Failure "how")
+		in
+		let rec dec2Bin k n=
+			if(n=0) then []
+			else (helper (k mod 2)) :: (dec2Bin (k/2) (n-1))
+		in
+		List.rev (dec2Bin i_value i_size)
     )
     | BoolC b -> [(BoolC b)]
 	| SymbIntC (name, i_size) -> (
